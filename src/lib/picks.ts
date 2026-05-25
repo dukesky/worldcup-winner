@@ -41,3 +41,9 @@ export interface R32Slot {
   side: 'left' | 'right'
   position: number  // 1-8 within side (top=1, bottom=8)
 }
+
+export interface KnockoutStructureEntry {
+  matchId: string   // "R16_L1" through "FINAL"
+  homeFeeder: string
+  awayFeeder: string
+}

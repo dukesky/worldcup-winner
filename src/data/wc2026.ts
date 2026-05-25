@@ -1,6 +1,6 @@
-import type { Team, GroupId } from '@/lib/picks'
+import type { Team, GroupId, TeamId, R32Slot, KnockoutStructureEntry } from '@/lib/picks'
 
-export const TEAMS: Record<string, Team> = {
+export const TEAMS: Readonly<Record<string, Team>> = {
   // Group A (USA hosts)
   USA:  { id: 'USA',  name: 'United States',  nameZh: '美国',        nameEs: 'EE.UU.',             flag: '🇺🇸', group: 'A' },
   PAN:  { id: 'PAN',  name: 'Panama',         nameZh: '巴拿马',      nameEs: 'Panamá',             flag: '🇵🇦', group: 'A' },
@@ -63,7 +63,7 @@ export const TEAMS: Record<string, Team> = {
   GHA:  { id: 'GHA',  name: 'Ghana',          nameZh: '加纳',        nameEs: 'Ghana',              flag: '🇬🇭', group: 'L' },
 }
 
-export const GROUPS: { id: GroupId; teams: string[] }[] = [
+export const GROUPS: { id: GroupId; teams: TeamId[] }[] = [
   { id: 'A', teams: ['USA', 'PAN', 'BOL', 'JAM'] },
   { id: 'B', teams: ['MEX', 'FRA', 'SRB', 'ALB'] },
   { id: 'C', teams: ['CAN', 'ENG', 'DEN', 'SVK'] },
@@ -79,7 +79,7 @@ export const GROUPS: { id: GroupId; teams: string[] }[] = [
 ]
 
 // Official FIFA 2026 R32 seeding — verified from official bracket
-export const R32_SLOTS: import('@/lib/picks').R32Slot[] = [
+export const R32_SLOTS: R32Slot[] = [
   // LEFT SIDE (8 matches)
   { matchId: 'R32_L1', homeSlot: '1E',     awaySlot: '3ABCDF', side: 'left',  position: 1 },
   { matchId: 'R32_L2', homeSlot: '1I',     awaySlot: '3CDFGH', side: 'left',  position: 2 },
@@ -100,7 +100,7 @@ export const R32_SLOTS: import('@/lib/picks').R32Slot[] = [
   { matchId: 'R32_R8', homeSlot: '1K',     awaySlot: '3DEIJL', side: 'right', position: 8 },
 ]
 
-export const KNOCKOUT_STRUCTURE = [
+export const KNOCKOUT_STRUCTURE: KnockoutStructureEntry[] = [
   // R16 (left side)
   { matchId: 'R16_L1', homeFeeder: 'R32_L1', awayFeeder: 'R32_L2' },
   { matchId: 'R16_L2', homeFeeder: 'R32_L3', awayFeeder: 'R32_L4' },
