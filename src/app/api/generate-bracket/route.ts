@@ -13,14 +13,19 @@ let fontData: ArrayBuffer | null = null
 function getFont() {
   if (!fontData) {
     const fontPath = path.join(process.cwd(), 'public', 'Inter-Regular.ttf')
-    fontData = readFileSync(fontPath).buffer as ArrayBuffer
+    const buf = readFileSync(fontPath)
+    fontData = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer
   }
   return fontData
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const picks: BracketPicks = await req.json()
+    const body = await req.json()
+    if (!body || !Array.isArray(body.groups) || !Array.isArray(body.knockout)) {
+      return NextResponse.json({ error: 'Invalid picks payload' }, { status: 400 })
+    }
+    const picks = body as BracketPicks
 
     const svg = await satori(
       createElement(BracketImageTemplate, { picks }),
