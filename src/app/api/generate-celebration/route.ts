@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
     if (!team) return NextResponse.json({ error: 'Unknown team' }, { status: 400 })
 
     const lang: Language = (['en', 'cn', 'es'] as Language[]).includes(language) ? language : 'en'
-    const prompt = PROMPT_TEMPLATES[lang](team.name)
+    const teamName = lang === 'cn' ? team.nameZh : lang === 'es' ? team.nameEs : team.name
+    const prompt = PROMPT_TEMPLATES[lang](teamName)
 
     // Use flux for text-to-image (no photo), gpt-image-1 for image editing (with photo)
     const model = photo ? 'openai/gpt-image-1' : 'black-forest-labs/flux-1.1-pro'
@@ -65,7 +66,9 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json()
-    const imageUrl: string = data.data?.[0]?.url ?? data.data?.[0]?.b64_json ?? null
+    const raw = data.data?.[0]
+    const imageUrl: string | null =
+      raw?.url ?? (raw?.b64_json ? `data:image/png;base64,${raw.b64_json}` : null)
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'No image returned' }, { status: 502 })

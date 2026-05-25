@@ -51,7 +51,7 @@ export function SharePage({ lang }: Props) {
             body: JSON.stringify({
               photo: picks.photoDataUrl,
               championTeam: champion,
-              language: picks.language ?? lang,
+              language: picks.language,
             }),
           })
             .then(r => {
@@ -69,11 +69,20 @@ export function SharePage({ lang }: Props) {
       .finally(() => setLoading(false))
   }, [])
 
-  function download(url: string, filename: string) {
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.click()
+  async function download(url: string, filename: string) {
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(objectUrl)
+    } catch {
+      // Fallback: open in new tab
+      window.open(url, '_blank')
+    }
   }
 
   if (loading) {
