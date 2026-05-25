@@ -81,9 +81,9 @@ export function KnockoutBracket({ r32Matchups, knockoutPicks, lang, championTeam
 
   return (
     <div className="overflow-x-auto">
-      <div className="inline-flex gap-0 bg-[#060b18] rounded-xl p-4">
+      <div className="inline-flex flex-col gap-0 bg-[#060b18] rounded-xl p-4">
         {/* Column labels */}
-        <div className="flex gap-[5px] items-end mb-2 text-[#3a4a6a] text-[8px] font-bold tracking-widest uppercase px-4">
+        <div className="flex gap-[5px] items-end mb-2 text-[#3a4a6a] text-[8px] font-bold tracking-widest uppercase">
           <div style={{ width: W.r32, textAlign: 'center' }}>R32</div>
           <div style={{ width: W.r16, textAlign: 'center' }}>R16</div>
           <div style={{ width: W.qf, textAlign: 'center' }}>QF</div>
@@ -209,7 +209,7 @@ export function KnockoutBracket({ r32Matchups, knockoutPicks, lang, championTeam
                 <div style={{ position: 'absolute', top: sfTop(), left: 0, right: 0, height: CARD_H }}>
                   <MatchCard matchId={matchId} homeTeam={homeTeam} awayTeam={awayTeam}
                     winner={pick?.winner ?? null} score={pick?.score ?? { home: null, away: null }}
-                    lang={lang} isChampionPath={false}
+                    lang={lang} isChampionPath={isChampionPath(matchId, pick)}
                     onWinnerSelect={t => onWinnerSelect(matchId, t)} onScoreChange={() => {}} />
                 </div>
               )
@@ -226,7 +226,7 @@ export function KnockoutBracket({ r32Matchups, knockoutPicks, lang, championTeam
                 <div key={matchId} style={{ position: 'absolute', top: qfTop(i), left: 0, right: 0, height: CARD_H }}>
                   <MatchCard matchId={matchId} homeTeam={homeTeam} awayTeam={awayTeam}
                     winner={pick?.winner ?? null} score={pick?.score ?? { home: null, away: null }}
-                    lang={lang} isChampionPath={false}
+                    lang={lang} isChampionPath={isChampionPath(matchId, pick)}
                     onWinnerSelect={t => onWinnerSelect(matchId, t)} onScoreChange={() => {}} />
                 </div>
               )
@@ -243,7 +243,7 @@ export function KnockoutBracket({ r32Matchups, knockoutPicks, lang, championTeam
                 <div key={matchId} style={{ position: 'absolute', top: r16Top(i), left: 0, right: 0, height: CARD_H }}>
                   <MatchCard matchId={matchId} homeTeam={homeTeam} awayTeam={awayTeam}
                     winner={pick?.winner ?? null} score={pick?.score ?? { home: null, away: null }}
-                    lang={lang} isChampionPath={false}
+                    lang={lang} isChampionPath={isChampionPath(matchId, pick)}
                     onWinnerSelect={t => onWinnerSelect(matchId, t)} onScoreChange={() => {}} />
                 </div>
               )
