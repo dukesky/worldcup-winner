@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import type { GroupPick, KnockoutMatchPick, TeamId, GroupId } from '@/lib/picks'
 import { GROUPS, KNOCKOUT_STRUCTURE } from '@/data/wc2026'
 import { buildR32Matchups } from '@/lib/bracket'
@@ -7,7 +7,7 @@ import { buildR32Matchups } from '@/lib/bracket'
 function initialGroups(): GroupPick[] {
   return GROUPS.map(g => ({
     groupId: g.id as GroupId,
-    ranking: [...g.teams, ''].slice(0, 4) as [TeamId, TeamId, TeamId, TeamId],
+    ranking: ['', '', '', ''] as [TeamId, TeamId, TeamId, TeamId],
     scores: {},
   }))
 }
@@ -49,7 +49,7 @@ export function usePredictions() {
 
   const champion = knockout.find(m => m.matchId === 'FINAL')?.winner ?? null
 
-  const r32Matchups = buildR32Matchups(groups)
+  const r32Matchups = useMemo(() => buildR32Matchups(groups), [groups])
 
   const groupsComplete = groups.every(g => g.ranking[0] && g.ranking[1] && g.ranking[2])
 
