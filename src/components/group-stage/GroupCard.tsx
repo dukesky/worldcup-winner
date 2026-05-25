@@ -18,10 +18,14 @@ interface Props {
 
 export function GroupCard({ group, teams, pick, lang, onRankingChange }: Props) {
   function handleTeamClick(teamId: TeamId) {
+    // Don't allow interacting with the auto-filled 4th place slot
+    const currentRankIdx = pick.ranking.findIndex(r => r === teamId)
+    if (currentRankIdx === 3) return  // slot 3 is auto-filled, not user-selectable
+
     const current = [...pick.ranking] as [TeamId, TeamId, TeamId, TeamId]
     const existingIdx = current.indexOf(teamId)
     if (existingIdx !== -1) {
-      // Deselect: remove from ranking
+      // Deselect: remove from ranking (only slots 0-2)
       current[existingIdx] = '' as TeamId
     } else {
       // Place in next empty slot (slots 0, 1, 2 only — slot 3 is auto-4th)
@@ -53,6 +57,7 @@ export function GroupCard({ group, teams, pick, lang, onRankingChange }: Props) 
           const team = teams[teamId]
           const rankIdx = pick.ranking.findIndex(r => r === teamId)
           const isRanked = rankIdx !== -1 && !!pick.ranking[rankIdx]
+          const isAutoFilled = isRanked && rankIdx === 3
 
           return (
             <button
@@ -60,7 +65,11 @@ export function GroupCard({ group, teams, pick, lang, onRankingChange }: Props) 
               data-testid={`team-${teamId}`}
               onClick={() => handleTeamClick(teamId as TeamId)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 border transition-all text-left ${
-                isRanked ? RANK_BG[rankIdx] : 'bg-[#0c1526] border-[#1a2847] hover:border-[#2a3a60]'
+                isAutoFilled
+                  ? `${RANK_BG[rankIdx]} opacity-60 cursor-default`
+                  : isRanked
+                    ? RANK_BG[rankIdx]
+                    : 'bg-[#0c1526] border-[#1a2847] hover:border-[#2a3a60]'
               }`}
             >
               <span className={`text-sm font-bold w-5 ${isRanked ? RANK_COLORS[rankIdx] : 'text-[#2a3a5a]'}`}>
@@ -70,6 +79,9 @@ export function GroupCard({ group, teams, pick, lang, onRankingChange }: Props) 
               <span className={`text-sm font-semibold ${isRanked ? 'text-white' : 'text-[#5a6a7a]'}`}>
                 {lang === 'cn' ? team?.nameZh : lang === 'es' ? team?.nameEs : team?.name}
               </span>
+              {rankIdx === 3 && isRanked && (
+                <span className="text-[8px] text-[#4a5a6a] ml-auto">AUTO</span>
+              )}
             </button>
           )
         })}
