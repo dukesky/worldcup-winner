@@ -17,12 +17,9 @@ export default function PredictPage() {
   const {
     groups, knockout, r32Matchups, champion,
     setGroupRanking, setGroupScore, setKnockoutWinner, setKnockoutScore,
-    setPhotoDataUrl,
   } = usePredictions()
 
-  async function handlePhotoReady(dataUrl: string | undefined) {
-    setPhotoDataUrl(dataUrl)
-    // Navigate to share page, passing picks via sessionStorage
+  function handlePhotoReady(dataUrl: string | undefined) {
     sessionStorage.setItem('wc2026_picks', JSON.stringify({ groups, knockout, language: lang, photoDataUrl: dataUrl }))
     router.push('/share')
   }

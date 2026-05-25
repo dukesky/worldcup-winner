@@ -4,12 +4,6 @@ import { TEAMS } from '@/data/wc2026'
 import { t } from '@/lib/i18n'
 import type { Language, TeamId } from '@/lib/picks'
 
-// canvas-confetti is browser-only
-let confetti: ((opts: object) => void) | null = null
-if (typeof window !== 'undefined') {
-  import('canvas-confetti').then(m => { confetti = m.default })
-}
-
 interface Props {
   champion: TeamId
   lang: Language
@@ -20,12 +14,17 @@ export function ChampionReveal({ champion, lang, onContinue }: Props) {
   const team = TEAMS[champion]
 
   useEffect(() => {
-    confetti?.({
-      particleCount: 150,
-      spread: 80,
-      colors: ['#ffd700', '#ff8c00', '#ffffff', '#4caf50'],
-      origin: { y: 0.6 },
+    let cancelled = false
+    import('canvas-confetti').then(m => {
+      if (cancelled) return
+      m.default({
+        particleCount: 150,
+        spread: 80,
+        colors: ['#ffd700', '#ff8c00', '#ffffff', '#4caf50'],
+        origin: { y: 0.6 },
+      })
     })
+    return () => { cancelled = true }
   }, [])
 
   return (
