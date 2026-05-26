@@ -3,23 +3,12 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 import satori from 'satori'
 import { Resvg } from '@resvg/resvg-js'
-import { readFileSync } from 'fs'
-import path from 'path'
 import { createElement } from 'react'
 import { BracketImageTemplate } from '@/components/bracket-image/BracketImageTemplate'
 import type { BracketPicks } from '@/lib/picks'
 import { fetchFlagImages } from '@/lib/flags'
 import { TEAMS } from '@/data/wc2026'
-
-let fontData: ArrayBuffer | null = null
-function getFont() {
-  if (!fontData) {
-    const fontPath = path.join(process.cwd(), 'public', 'Inter-Regular.ttf')
-    const buf = readFileSync(fontPath)
-    fontData = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer
-  }
-  return fontData
-}
+import { loadInterFonts, makeSatoriFonts } from '@/lib/image-fonts'
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,14 +18,17 @@ export async function POST(req: NextRequest) {
     }
     const picks = body as BracketPicks
 
-    const flagImages = await fetchFlagImages(Object.keys(TEAMS))
+    const [flagImages, fonts] = await Promise.all([
+      fetchFlagImages(Object.keys(TEAMS)),
+      loadInterFonts(),
+    ])
 
     const svg = await satori(
       createElement(BracketImageTemplate, { picks, flagImages }),
       {
         width: 1600,
         height: 760,
-        fonts: [{ name: 'Inter', data: getFont(), weight: 400 }],
+        fonts: makeSatoriFonts(fonts),
       }
     )
 
