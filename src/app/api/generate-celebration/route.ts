@@ -16,7 +16,8 @@ const PROMPT_TEMPLATES: Record<Language, (team: string) => string> = {
   es: (team) => `Ilustración estilo caricatura anime de una persona celebrando con los jugadores del equipo nacional de fútbol de ${team}. Trofeo de la Copa Mundial, confeti colorido, estadio lleno de fanáticos, atmósfera de celebración vibrante.`,
 }
 
-const MODEL = 'google/gemini-2.0-flash-exp'
+// Supports text→image and photo editing via OpenRouter
+const MODEL = 'google/gemini-3.1-flash-image-preview'
 
 async function generateSatoriCelebration(
   champion: TeamId,
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
         const requestBody = {
           model: MODEL,
           messages: [{ role: 'user', content: content.length === 1 ? prompt : content }],
-          modalities: ['image', 'text'],
+          modalities: ['image'],
         }
 
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
