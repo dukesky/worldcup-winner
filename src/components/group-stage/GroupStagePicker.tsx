@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { GroupCard } from './GroupCard'
-import { GROUPS, TEAMS } from '@/data/wc2026'
+import { GROUPS, TEAMS, GROUP_MATCHES } from '@/data/wc2026'
 import { t } from '@/lib/i18n'
 import type { GroupPick, TeamId, GroupId, Language } from '@/lib/picks'
 
@@ -11,39 +11,77 @@ interface Props {
   onRankingChange: (groupId: GroupId, ranking: [TeamId, TeamId, TeamId, TeamId]) => void
   onScoreChange: (groupId: GroupId, matchKey: string, home: number | null, away: number | null) => void
   onComplete: () => void
+  onBack: () => void
 }
 
-export function GroupStagePicker({ picks, lang, onRankingChange, onScoreChange, onComplete }: Props) {
+export function GroupStagePicker({ picks, lang, onRankingChange, onScoreChange, onComplete, onBack }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const group = GROUPS[currentIdx]
   const pick = picks.find(p => p.groupId === group.id) ?? picks[currentIdx]
   const isLast = currentIdx === GROUPS.length - 1
   const currentComplete = pick.ranking.filter(Boolean).length >= 3
+  const fixtures = GROUP_MATCHES[group.id as GroupId]
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8 pt-14">
       {/* Progress */}
-      <div className="flex items-center justify-between mb-6">
-        <span className="text-[#8a9bc0] text-sm">{t(lang, 'groupStage')}</span>
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={onBack}
+          className="text-[#8a9bc0] text-sm hover:text-[#ffd700] transition-colors"
+        >
+          {t(lang, 'backToHome')}
+        </button>
         <span className="text-[#ffd700] text-sm font-bold">
           {t(lang, 'groupOf', currentIdx + 1, GROUPS.length)}
         </span>
       </div>
-      <div className="h-1 bg-[#1e2d50] rounded mb-8">
+      <div className="h-1 bg-[#1e2d50] rounded mb-6">
         <div
           className="h-full bg-gradient-to-r from-[#ffd700] to-[#ff8c00] rounded transition-all"
           style={{ width: `${((currentIdx + 1) / GROUPS.length) * 100}%` }}
         />
       </div>
 
-      <GroupCard
-        group={group}
-        teams={TEAMS}
-        pick={pick}
-        lang={lang}
-        onRankingChange={r => onRankingChange(group.id as GroupId, r)}
-        onScoreChange={(k, h, a) => onScoreChange(group.id as GroupId, k, h, a)}
-      />
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Group ranking card */}
+        <div className="flex-1">
+          <GroupCard
+            group={group}
+            teams={TEAMS}
+            pick={pick}
+            lang={lang}
+            onRankingChange={r => onRankingChange(group.id as GroupId, r)}
+            onScoreChange={(k, h, a) => onScoreChange(group.id as GroupId, k, h, a)}
+          />
+        </div>
+
+        {/* Fixtures panel */}
+        <div className="md:w-64 bg-[#0c1526] border border-[#1a2847] rounded-xl p-3">
+          <div className="text-[#ffd700] text-[10px] font-bold uppercase tracking-wider mb-3">
+            Group {group.id} Matches
+          </div>
+          <div className="flex flex-col gap-3">
+            {fixtures.map((m, i) => {
+              const home = TEAMS[m.home]
+              const away = TEAMS[m.away]
+              return (
+                <div key={i} className="text-[9px] text-[#8a9bc0]">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span>{home?.flag}</span>
+                    <span className="text-white text-[10px]">{home?.name}</span>
+                    <span className="text-[#3a4a6a] mx-1">vs</span>
+                    <span>{away?.flag}</span>
+                    <span className="text-white text-[10px]">{away?.name}</span>
+                  </div>
+                  <div className="text-[#4a5a7a]">{m.date} · {m.time}</div>
+                  <div className="text-[#4a5a7a] truncate">{m.venue}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
 
       <div className="flex gap-3 mt-6">
         {currentIdx > 0 && (

@@ -26,6 +26,7 @@ export function usePredictions() {
   const [groups, setGroups] = useState<GroupPick[]>(initialGroups)
   const [knockout, setKnockout] = useState<KnockoutMatchPick[]>(initialKnockout)
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>()
+  const [wildcardSelections, setWildcardSelectionsState] = useState<Record<string, string>>({})
 
   const setGroupRanking = useCallback((groupId: GroupId, ranking: [TeamId, TeamId, TeamId, TeamId]) => {
     setGroups(prev => prev.map(g => g.groupId === groupId ? { ...g, ranking } : g))
@@ -47,6 +48,10 @@ export function usePredictions() {
     setKnockout(prev => prev.map(m => m.matchId === matchId ? { ...m, score: { home, away } } : m))
   }, [])
 
+  const setWildcardSelection = useCallback((matchId: string, teamId: string) => {
+    setWildcardSelectionsState(prev => ({ ...prev, [matchId]: teamId }))
+  }, [])
+
   const champion = knockout.find(m => m.matchId === 'FINAL')?.winner ?? null
 
   const r32Matchups = useMemo(() => buildR32Matchups(groups), [groups])
@@ -57,9 +62,9 @@ export function usePredictions() {
 
   return {
     groups, knockout, photoDataUrl, champion,
-    r32Matchups, groupsComplete, knockoutComplete,
+    r32Matchups, groupsComplete, knockoutComplete, wildcardSelections,
     setGroupRanking, setGroupScore,
     setKnockoutWinner, setKnockoutScore,
-    setPhotoDataUrl,
+    setPhotoDataUrl, setWildcardSelection,
   }
 }
