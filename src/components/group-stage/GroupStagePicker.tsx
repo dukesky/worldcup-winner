@@ -22,6 +22,8 @@ export function GroupStagePicker({ picks, lang, currentGroupIdx, onGroupIdxChang
   const pick = picks.find(p => p.groupId === group.id) ?? picks[currentIdx]
   const isLast = currentIdx === GROUPS.length - 1
   const currentComplete = pick.ranking.filter(Boolean).length >= 3
+  const completedCount = picks.filter(p => p.ranking.filter(Boolean).length >= 3).length
+  const allComplete = completedCount === GROUPS.length
   const fixtures = GROUP_MATCHES[group.id as GroupId]
 
   return (
@@ -124,10 +126,14 @@ export function GroupStagePicker({ picks, lang, currentGroupIdx, onGroupIdxChang
         )}
         <button
           onClick={() => isLast ? onComplete() : setCurrentIdx(currentIdx + 1)}
-          disabled={!currentComplete}
+          disabled={isLast ? !allComplete : !currentComplete}
           className="flex-1 bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black py-3 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] transition-transform"
         >
-          {isLast ? t(lang, 'knockoutRounds') : t(lang, 'nextGroup')}
+          {isLast
+            ? allComplete
+              ? t(lang, 'knockoutRounds')
+              : `${completedCount}/${GROUPS.length} groups done`
+            : t(lang, 'nextGroup')}
         </button>
       </div>
     </div>
