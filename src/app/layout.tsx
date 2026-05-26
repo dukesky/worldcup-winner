@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -13,7 +14,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${inter.className} bg-[#060b18] text-white min-h-screen`}>
-        {children}
+        <header className="fixed top-0 right-0 z-50 p-3">
+          <LanguageSwitcher />
+        </header>
+        <div className="pt-0">
+          {children}
+        </div>
       </body>
     </html>
   )

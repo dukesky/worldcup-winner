@@ -18,11 +18,20 @@ export interface KnockoutMatchPick {
   score: { home: number | null; away: number | null }
 }
 
+export interface GroupMatch {
+  home: TeamId
+  away: TeamId
+  date: string   // "2026-06-12"
+  time: string   // "17:00 ET"
+  venue: string  // "MetLife Stadium, New York"
+}
+
 export interface BracketPicks {
   groups: GroupPick[]        // 12 entries, one per group
   knockout: KnockoutMatchPick[] // 31 matches total
   language: Language
   photoDataUrl?: string      // base64 selfie
+  wildcardSelections?: Record<string, TeamId>
 }
 
 export interface Team {

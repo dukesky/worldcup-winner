@@ -1,4 +1,4 @@
-import type { Team, GroupId, TeamId, R32Slot, KnockoutStructureEntry } from '@/lib/picks'
+import type { Team, GroupId, TeamId, R32Slot, KnockoutStructureEntry, GroupMatch } from '@/lib/picks'
 
 export const TEAMS: Readonly<Record<string, Team>> = {
   // Group A (USA hosts)
@@ -122,3 +122,102 @@ export const KNOCKOUT_STRUCTURE: KnockoutStructureEntry[] = [
   // Final
   { matchId: 'FINAL', homeFeeder: 'SF_L', awayFeeder: 'SF_R' },
 ]
+
+export const GROUP_MATCHES: Record<GroupId, GroupMatch[]> = {
+  A: [
+    { home: 'USA', away: 'PAN', date: '2026-06-11', time: '17:00 ET', venue: 'Rose Bowl, Los Angeles' },
+    { home: 'BOL', away: 'JAM', date: '2026-06-11', time: '20:00 ET', venue: 'SoFi Stadium, Los Angeles' },
+    { home: 'USA', away: 'BOL', date: '2026-06-16', time: '17:00 ET', venue: 'Lumen Field, Seattle' },
+    { home: 'JAM', away: 'PAN', date: '2026-06-16', time: '20:00 ET', venue: "Levi's Stadium, San Francisco" },
+    { home: 'USA', away: 'JAM', date: '2026-06-26', time: '17:00 ET', venue: 'Rose Bowl, Los Angeles' },
+    { home: 'PAN', away: 'BOL', date: '2026-06-26', time: '17:00 ET', venue: "Levi's Stadium, San Francisco" },
+  ],
+  B: [
+    { home: 'MEX', away: 'FRA', date: '2026-06-12', time: '18:00 CT', venue: 'Estadio Azteca, Mexico City' },
+    { home: 'SRB', away: 'ALB', date: '2026-06-12', time: '21:00 ET', venue: 'AT&T Stadium, Arlington' },
+    { home: 'MEX', away: 'SRB', date: '2026-06-17', time: '18:00 CT', venue: 'Estadio BBVA, Monterrey' },
+    { home: 'ALB', away: 'FRA', date: '2026-06-17', time: '21:00 ET', venue: 'Hard Rock Stadium, Miami' },
+    { home: 'MEX', away: 'ALB', date: '2026-06-25', time: '17:00 CT', venue: 'Estadio Azteca, Mexico City' },
+    { home: 'FRA', away: 'SRB', date: '2026-06-25', time: '17:00 ET', venue: 'Mercedes-Benz Stadium, Atlanta' },
+  ],
+  C: [
+    { home: 'CAN', away: 'ENG', date: '2026-06-12', time: '14:00 ET', venue: 'BMO Field, Toronto' },
+    { home: 'DEN', away: 'SVK', date: '2026-06-12', time: '20:00 PT', venue: 'BC Place, Vancouver' },
+    { home: 'CAN', away: 'DEN', date: '2026-06-17', time: '17:00 ET', venue: 'BMO Field, Toronto' },
+    { home: 'SVK', away: 'ENG', date: '2026-06-17', time: '20:00 PT', venue: 'BC Place, Vancouver' },
+    { home: 'CAN', away: 'SVK', date: '2026-06-27', time: '20:00 PT', venue: 'BC Place, Vancouver' },
+    { home: 'ENG', away: 'DEN', date: '2026-06-27', time: '17:00 ET', venue: 'BMO Field, Toronto' },
+  ],
+  D: [
+    { home: 'NED', away: 'AUT', date: '2026-06-13', time: '17:00 ET', venue: 'Lincoln Financial Field, Philadelphia' },
+    { home: 'UKR', away: 'ISL', date: '2026-06-13', time: '20:00 ET', venue: 'Gillette Stadium, Boston' },
+    { home: 'NED', away: 'UKR', date: '2026-06-18', time: '17:00 ET', venue: 'MetLife Stadium, New York' },
+    { home: 'ISL', away: 'AUT', date: '2026-06-18', time: '20:00 ET', venue: 'Lincoln Financial Field, Philadelphia' },
+    { home: 'NED', away: 'ISL', date: '2026-06-25', time: '17:00 ET', venue: 'MetLife Stadium, New York' },
+    { home: 'AUT', away: 'UKR', date: '2026-06-25', time: '17:00 ET', venue: 'Gillette Stadium, Boston' },
+  ],
+  E: [
+    { home: 'BRA', away: 'COL', date: '2026-06-13', time: '14:00 CT', venue: 'NRG Stadium, Houston' },
+    { home: 'SEN', away: 'PER', date: '2026-06-13', time: '20:00 CT', venue: 'AT&T Stadium, Arlington' },
+    { home: 'BRA', away: 'SEN', date: '2026-06-18', time: '14:00 ET', venue: 'Hard Rock Stadium, Miami' },
+    { home: 'PER', away: 'COL', date: '2026-06-18', time: '20:00 CT', venue: 'NRG Stadium, Houston' },
+    { home: 'BRA', away: 'PER', date: '2026-06-26', time: '14:00 ET', venue: 'Hard Rock Stadium, Miami' },
+    { home: 'COL', away: 'SEN', date: '2026-06-26', time: '14:00 CT', venue: 'AT&T Stadium, Arlington' },
+  ],
+  F: [
+    { home: 'ITA', away: 'SUI', date: '2026-06-14', time: '17:00 ET', venue: 'Mercedes-Benz Stadium, Atlanta' },
+    { home: 'CMR', away: 'GIN', date: '2026-06-14', time: '20:00 CT', venue: 'Arrowhead Stadium, Kansas City' },
+    { home: 'ITA', away: 'CMR', date: '2026-06-19', time: '17:00 PT', venue: 'Lumen Field, Seattle' },
+    { home: 'GIN', away: 'SUI', date: '2026-06-19', time: '20:00 PT', venue: 'SoFi Stadium, Los Angeles' },
+    { home: 'ITA', away: 'GIN', date: '2026-06-27', time: '17:00 ET', venue: 'Mercedes-Benz Stadium, Atlanta' },
+    { home: 'SUI', away: 'CMR', date: '2026-06-27', time: '17:00 CT', venue: 'Arrowhead Stadium, Kansas City' },
+  ],
+  G: [
+    { home: 'ESP', away: 'TUR', date: '2026-06-14', time: '18:00 CT', venue: 'Estadio Akron, Guadalajara' },
+    { home: 'GEO', away: 'UZB', date: '2026-06-14', time: '21:00 CT', venue: 'Estadio BBVA, Monterrey' },
+    { home: 'ESP', away: 'GEO', date: '2026-06-19', time: '18:00 CT', venue: 'Estadio Azteca, Mexico City' },
+    { home: 'UZB', away: 'TUR', date: '2026-06-19', time: '21:00 CT', venue: 'Estadio Akron, Guadalajara' },
+    { home: 'ESP', away: 'UZB', date: '2026-06-28', time: '17:00 CT', venue: 'Estadio Azteca, Mexico City' },
+    { home: 'TUR', away: 'GEO', date: '2026-06-28', time: '17:00 CT', venue: 'Estadio Akron, Guadalajara' },
+  ],
+  H: [
+    { home: 'POR', away: 'CRO', date: '2026-06-15', time: '17:00 PT', venue: "Levi's Stadium, San Francisco" },
+    { home: 'CZE', away: 'TZA', date: '2026-06-15', time: '20:00 PT', venue: 'Rose Bowl, Los Angeles' },
+    { home: 'POR', away: 'CZE', date: '2026-06-20', time: '17:00 PT', venue: 'SoFi Stadium, Los Angeles' },
+    { home: 'TZA', away: 'CRO', date: '2026-06-20', time: '20:00 PT', venue: "Levi's Stadium, San Francisco" },
+    { home: 'POR', away: 'TZA', date: '2026-06-29', time: '17:00 PT', venue: 'SoFi Stadium, Los Angeles' },
+    { home: 'CRO', away: 'CZE', date: '2026-06-29', time: '17:00 PT', venue: 'Rose Bowl, Los Angeles' },
+  ],
+  I: [
+    { home: 'GER', away: 'JPN', date: '2026-06-15', time: '14:00 ET', venue: 'MetLife Stadium, New York' },
+    { home: 'IDN', away: 'VIE', date: '2026-06-15', time: '20:00 ET', venue: 'Gillette Stadium, Boston' },
+    { home: 'GER', away: 'IDN', date: '2026-06-20', time: '14:00 ET', venue: 'Lincoln Financial Field, Philadelphia' },
+    { home: 'VIE', away: 'JPN', date: '2026-06-20', time: '20:00 ET', venue: 'MetLife Stadium, New York' },
+    { home: 'GER', away: 'VIE', date: '2026-06-29', time: '14:00 ET', venue: 'MetLife Stadium, New York' },
+    { home: 'JPN', away: 'IDN', date: '2026-06-29', time: '14:00 ET', venue: 'Gillette Stadium, Boston' },
+  ],
+  J: [
+    { home: 'ARG', away: 'URU', date: '2026-06-15', time: '21:00 CT', venue: 'NRG Stadium, Houston' },
+    { home: 'ECU', away: 'CHL', date: '2026-06-15', time: '18:00 CT', venue: 'AT&T Stadium, Arlington' },
+    { home: 'ARG', away: 'ECU', date: '2026-06-21', time: '17:00 CT', venue: 'Arrowhead Stadium, Kansas City' },
+    { home: 'CHL', away: 'URU', date: '2026-06-21', time: '20:00 CT', venue: 'NRG Stadium, Houston' },
+    { home: 'ARG', away: 'CHL', date: '2026-06-29', time: '17:00 CT', venue: 'NRG Stadium, Houston' },
+    { home: 'URU', away: 'ECU', date: '2026-06-29', time: '17:00 CT', venue: 'AT&T Stadium, Arlington' },
+  ],
+  K: [
+    { home: 'MAR', away: 'AUS', date: '2026-06-16', time: '14:00 PT', venue: 'BC Place, Vancouver' },
+    { home: 'TUN', away: 'SAU', date: '2026-06-16', time: '20:00 ET', venue: 'BMO Field, Toronto' },
+    { home: 'MAR', away: 'TUN', date: '2026-06-21', time: '14:00 CT', venue: 'Arrowhead Stadium, Kansas City' },
+    { home: 'SAU', away: 'AUS', date: '2026-06-21', time: '20:00 ET', venue: 'Mercedes-Benz Stadium, Atlanta' },
+    { home: 'MAR', away: 'SAU', date: '2026-06-28', time: '14:00 CT', venue: 'Arrowhead Stadium, Kansas City' },
+    { home: 'AUS', away: 'TUN', date: '2026-06-28', time: '14:00 ET', venue: 'Mercedes-Benz Stadium, Atlanta' },
+  ],
+  L: [
+    { home: 'KOR', away: 'NGA', date: '2026-06-16', time: '17:00 ET', venue: 'Hard Rock Stadium, Miami' },
+    { home: 'CRI', away: 'GHA', date: '2026-06-16', time: '20:00 ET', venue: 'Lincoln Financial Field, Philadelphia' },
+    { home: 'KOR', away: 'CRI', date: '2026-06-21', time: '17:00 PT', venue: 'Lumen Field, Seattle' },
+    { home: 'GHA', away: 'NGA', date: '2026-06-21', time: '20:00 ET', venue: 'Hard Rock Stadium, Miami' },
+    { home: 'KOR', away: 'GHA', date: '2026-06-28', time: '17:00 PT', venue: 'Lumen Field, Seattle' },
+    { home: 'NGA', away: 'CRI', date: '2026-06-28', time: '17:00 ET', venue: 'Hard Rock Stadium, Miami' },
+  ],
+}

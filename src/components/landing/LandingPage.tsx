@@ -2,31 +2,13 @@
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/hooks/useLanguage'
 import { t } from '@/lib/i18n'
-import type { Language } from '@/lib/picks'
 
 export function LandingPage() {
   const router = useRouter()
-  const { lang, setLang } = useLanguage()
+  const { lang } = useLanguage()
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative px-4">
-      {/* Language switcher */}
-      <div className="absolute top-4 right-4 flex gap-2">
-        {(['en', 'cn', 'es'] as Language[]).map(l => (
-          <button
-            key={l}
-            onClick={() => setLang(l)}
-            className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
-              lang === l
-                ? 'bg-[#ffd700] text-black'
-                : 'text-[#ffd700] border border-[#ffd700] hover:bg-[#ffd700]/10'
-            }`}
-          >
-            {l === 'en' ? 'EN' : l === 'cn' ? '中文' : 'ES'}
-          </button>
-        ))}
-      </div>
-
       {/* Hero */}
       <div className="text-center max-w-lg">
         <div className="text-[#ffd700] text-xs font-bold tracking-[4px] uppercase mb-4">
