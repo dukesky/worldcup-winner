@@ -59,9 +59,9 @@ export function GroupStagePicker({ picks, lang, onRankingChange, onScoreChange, 
         {/* Fixtures panel */}
         <div className="md:w-64 bg-[#0c1526] border border-[#1a2847] rounded-xl p-3">
           <div className="text-[#ffd700] text-[10px] font-bold uppercase tracking-wider mb-3">
-            Group {group.id} Matches
+            {t(lang, 'groupStage')} — Group {group.id}
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {fixtures.map((m, i) => {
               const home = TEAMS[m.home]
               const away = TEAMS[m.away]
