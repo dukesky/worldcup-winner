@@ -102,17 +102,17 @@ export function SharePage({ lang }: Props) {
   }
 
   return (
-    <div className="min-h-screen py-10 px-4">
-      <div className="max-w-3xl mx-auto flex flex-col gap-8">
+    <div className="min-h-screen py-8 px-4">
+      <div className="max-w-4xl mx-auto flex flex-col gap-10">
         <h1 className="text-center text-[#ffd700] text-2xl font-black">🏆 Your Predictions</h1>
 
         {/* Bracket image */}
         {bracketUrl && (
-          <div className="flex flex-col gap-3">
-            <img src={bracketUrl} alt="Your bracket" className="w-full rounded-xl border border-[#1e2d50]" />
+          <div className="flex flex-col gap-4 items-center">
+            <img src={bracketUrl} alt="Your bracket" className="w-full block rounded-xl" style={{ display: 'block' }} />
             <button
               onClick={() => download(bracketUrl, 'wc2026-bracket.png')}
-              className="self-center bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black px-8 py-3 rounded-xl hover:scale-105 transition-transform"
+              className="bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black px-8 py-3 rounded-xl hover:scale-105 transition-transform"
             >
               {t(lang, 'downloadBracket')}
             </button>
@@ -121,11 +121,11 @@ export function SharePage({ lang }: Props) {
 
         {/* Group stage image */}
         {groupStageUrl && (
-          <div className="flex flex-col gap-3">
-            <img src={groupStageUrl} alt="Group stage" className="w-full rounded-xl border border-[#1e2d50]" />
+          <div className="flex flex-col gap-4 items-center">
+            <img src={groupStageUrl} alt="Group stage" className="w-full block rounded-xl" style={{ display: 'block' }} />
             <button
               onClick={() => download(groupStageUrl, 'wc2026-groups.png')}
-              className="self-center border border-[#ffd700] text-[#ffd700] font-black px-8 py-3 rounded-xl hover:bg-[#ffd700]/10 transition-colors"
+              className="border border-[#ffd700] text-[#ffd700] font-black px-8 py-3 rounded-xl hover:bg-[#ffd700]/10 transition-colors"
             >
               {t(lang, 'downloadGroupStage')}
             </button>
@@ -134,8 +134,8 @@ export function SharePage({ lang }: Props) {
 
         {/* Celebration image */}
         {celebrationUrl && (
-          <div className="flex flex-col items-center gap-3">
-            <img src={celebrationUrl} alt="Your celebration" className="max-w-sm w-full rounded-xl border border-[#ffd700]/30" />
+          <div className="flex flex-col items-center gap-4">
+            <img src={celebrationUrl} alt="Your celebration" className="w-full max-w-lg block rounded-xl" style={{ display: 'block' }} />
             <button
               onClick={() => download(celebrationUrl, 'wc2026-celebration.png')}
               className="bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black px-8 py-3 rounded-xl hover:scale-105 transition-transform"

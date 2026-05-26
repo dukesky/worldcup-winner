@@ -8,6 +8,8 @@ import path from 'path'
 import { createElement } from 'react'
 import { GroupStageImageTemplate } from '@/components/bracket-image/GroupStageImageTemplate'
 import type { BracketPicks } from '@/lib/picks'
+import { fetchFlagImages } from '@/lib/flags'
+import { TEAMS } from '@/data/wc2026'
 
 let fontData: ArrayBuffer | null = null
 function getFont() {
@@ -27,16 +29,18 @@ export async function POST(req: NextRequest) {
     }
     const picks = body as BracketPicks
 
+    const flagImages = await fetchFlagImages(Object.keys(TEAMS))
+
     const svg = await satori(
-      createElement(GroupStageImageTemplate, { picks }),
+      createElement(GroupStageImageTemplate, { picks, flagImages }),
       {
-        width: 960,
-        height: 660,
+        width: 1200,
+        height: 920,
         fonts: [{ name: 'Inter', data: getFont(), weight: 400 }],
       }
     )
 
-    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 960 } })
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } })
     const rendered = resvg.render()
     const pngBuffer = rendered.asPng()
     const arrayBuffer = pngBuffer.buffer.slice(

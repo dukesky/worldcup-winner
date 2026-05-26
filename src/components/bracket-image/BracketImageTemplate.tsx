@@ -1,14 +1,17 @@
 import { TEAMS, KNOCKOUT_STRUCTURE, R32_SLOTS } from '@/data/wc2026'
-import type { BracketPicks, TeamId } from '@/lib/picks'
+import type { BracketPicks, TeamId, Language } from '@/lib/picks'
 
 const GOLD = '#ffd700'
 const DARK = '#060b18'
-const NAVY = '#0c1526'
 const DIM_BORDER = '#1a2847'
+const WIN_BG = '#152206'
+const LOSE_BG = '#070c18'
+const PATH_BORDER = '#ffd700'
 
-const CARD_H = 56
-const INNER_GAP = 6
-const OUTER_GAP = 18
+const CARD_H = 66
+const INNER_GAP = 4
+const OUTER_GAP = 16
+const ROW_H = CARD_H / 2  // 33
 
 function r32Top(pos: number) {
   const pair = Math.floor((pos - 1) / 2)
@@ -26,29 +29,57 @@ function sfTop() {
 }
 const CONTAINER_H = r32Top(8) + CARD_H + 16
 
+function getName(tid: TeamId | null, lang: Language): string {
+  if (!tid) return 'TBD'
+  const t = TEAMS[tid]
+  if (!t) return tid
+  if (lang === 'cn') return t.nameZh
+  if (lang === 'es') return t.nameEs
+  return t.name
+}
+
 interface TeamRowProps {
   tid: TeamId | null
   isWinner: boolean
-  isPath: boolean
+  isLoser: boolean
+  score: number | null
   isBottom: boolean
+  lang: Language
+  flagImages: Record<string, string>
 }
 
-function TeamRow({ tid, isWinner, isPath: path, isBottom }: TeamRowProps) {
-  const tm = tid ? TEAMS[tid] : null
-  const textColor = isWinner && path ? GOLD : isWinner ? '#ffffff' : '#7a8fb0'
-  const fontWeight = isWinner ? 700 : 400
+function TeamRow({ tid, isWinner, isLoser, score, isBottom, lang, flagImages }: TeamRowProps) {
+  const bg = isWinner ? WIN_BG : isLoser ? LOSE_BG : '#0c1526'
+  const textColor = isWinner ? '#ffffff' : isLoser ? '#3a4a6a' : '#7a8fb0'
+  const fw = isWinner ? 700 : 400
+  const flagSrc = tid ? (flagImages[tid] ?? '') : ''
+
   return (
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: 6,
-      padding: '4px 10px',
+      height: ROW_H,
+      padding: '0 8px',
+      background: bg,
       borderTop: isBottom ? `1px solid ${DIM_BORDER}40` : 'none',
+      gap: 6,
     }}>
-      <span style={{ fontSize: 15 }}>{tm?.flag ?? ''}</span>
-      <span style={{ fontSize: 12, fontWeight, color: textColor }}>
-        {tm?.name ?? 'TBD'}
+      {flagSrc
+        ? <img src={flagSrc} width={26} height={18} style={{ borderRadius: 2, objectFit: 'cover', flexShrink: 0 }} />
+        : <div style={{ width: 26, height: 18, background: '#1a2847', borderRadius: 2, flexShrink: 0 }} />
+      }
+      <span style={{ fontSize: 12, fontWeight: fw, color: textColor, flex: 1 }}>
+        {getName(tid, lang)}
       </span>
+      {score !== null && (
+        <span style={{
+          fontSize: 14, fontWeight: 700,
+          color: isWinner ? GOLD : '#3a4a6a',
+          minWidth: 18, textAlign: 'right' as const,
+        }}>
+          {score}
+        </span>
+      )}
     </div>
   )
 }
@@ -57,66 +88,88 @@ interface MatchCellProps {
   homeTeam: TeamId | null
   awayTeam: TeamId | null
   winner: TeamId | null
+  homeScore: number | null
+  awayScore: number | null
   isPath: boolean
+  lang: Language
+  flagImages: Record<string, string>
 }
 
-function MatchCell({ homeTeam, awayTeam, winner, isPath }: MatchCellProps) {
-  const bg = isPath ? '#1a2e0a' : NAVY
-  const border = isPath ? GOLD : DIM_BORDER
+function MatchCell({ homeTeam, awayTeam, winner, homeScore, awayScore, isPath, lang, flagImages }: MatchCellProps) {
+  const border = isPath ? `1px solid ${PATH_BORDER}` : `1px solid ${DIM_BORDER}`
+  const hasResult = winner !== null
+  const homeWins = hasResult && homeTeam === winner
+  const awayWins = hasResult && awayTeam === winner
+
   return (
     <div style={{
-      background: bg,
-      border: `1px solid ${border}`,
+      border,
       borderRadius: 6,
       overflow: 'hidden',
       height: CARD_H,
       width: '100%',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'center',
     }}>
-      <TeamRow tid={homeTeam} isWinner={homeTeam === winner && winner !== null} isPath={isPath} isBottom={false} />
-      <TeamRow tid={awayTeam} isWinner={awayTeam === winner && winner !== null} isPath={isPath} isBottom={true} />
+      <TeamRow
+        tid={homeTeam} isWinner={homeWins} isLoser={hasResult && !homeWins}
+        score={homeScore} isBottom={false} lang={lang} flagImages={flagImages}
+      />
+      <TeamRow
+        tid={awayTeam} isWinner={awayWins} isLoser={hasResult && !awayWins}
+        score={awayScore} isBottom={true} lang={lang} flagImages={flagImages}
+      />
     </div>
   )
 }
 
-interface FinalCellProps {
-  champion: TeamId | null
-}
-
-function FinalCell({ champion }: FinalCellProps) {
-  const tm = champion ? TEAMS[champion] : null
+function FinalCell({ champion, lang, flagImages }: { champion: TeamId | null; lang: Language; flagImages: Record<string, string> }) {
+  const flagSrc = champion ? (flagImages[champion] ?? '') : ''
+  const name = getName(champion, lang)
   return (
     <div style={{
       background: '#1a3a0a',
       border: `2px solid ${GOLD}`,
       borderRadius: 10,
-      height: 80,
+      height: 90,
       width: '100%',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 2,
+      gap: 4,
     }}>
-      <div style={{ display: 'flex', color: GOLD, fontSize: 9, fontWeight: 700, letterSpacing: 3 }}>FINAL</div>
-      <div style={{ display: 'flex', fontSize: 22 }}>{tm?.flag ?? ''}</div>
-      <div style={{ display: 'flex', color: GOLD, fontSize: 12, fontWeight: 700 }}>{tm?.name ?? '?'}</div>
-      <div style={{ display: 'flex', color: '#4caf50', fontSize: 9, fontWeight: 700, letterSpacing: 1 }}>CHAMPION</div>
+      <span style={{ color: GOLD, fontSize: 9, fontWeight: 700, letterSpacing: 3, display: 'flex' }}>FINAL</span>
+      {flagSrc
+        ? <img src={flagSrc} width={44} height={30} style={{ borderRadius: 3, objectFit: 'cover' }} />
+        : <div style={{ width: 44, height: 30, background: '#1a2847', borderRadius: 3 }} />
+      }
+      <span style={{ color: '#ffffff', fontSize: 13, fontWeight: 700, display: 'flex' }}>{name}</span>
+      <span style={{ color: '#4caf50', fontSize: 9, fontWeight: 700, letterSpacing: 1, display: 'flex' }}>CHAMPION</span>
     </div>
   )
 }
 
-export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
+const ROUND_LABELS = ['R32', 'R16', 'QF', 'SF', '', 'SF', 'QF', 'R16', 'R32']
+
+interface Props {
+  picks: BracketPicks
+  flagImages: Record<string, string>
+}
+
+export function BracketImageTemplate({ picks, flagImages }: Props) {
   const { groups, knockout } = picks
+  const lang = picks.language
   const wildcardSelections = picks.wildcardSelections ?? {}
   const champion = knockout.find(m => m.matchId === 'FINAL')?.winner ?? null
 
   function getWinner(matchId: string): TeamId | null {
     return knockout.find(m => m.matchId === matchId)?.winner ?? null
   }
-
+  function getScore(matchId: string): { home: number | null; away: number | null } {
+    const m = knockout.find(m => m.matchId === matchId)
+    return m?.score ?? { home: null, away: null }
+  }
   function isPath(matchId: string): boolean {
     const w = getWinner(matchId)
     return !!champion && w === champion
@@ -128,45 +181,75 @@ export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
     const grp = groups.find(g => g.groupId === slot[1])
     return grp?.ranking[rank] ?? null
   }
-
   function r32AwayTeam(slot: string, matchId: string): TeamId | null {
     if (slot.length === 2) {
       const rank = parseInt(slot[0]) - 1
       const grp = groups.find(g => g.groupId === slot[1])
       return grp?.ranking[rank] ?? null
     }
-    // wildcard slot — check wildcard selections
     return wildcardSelections[matchId] ?? null
   }
 
-  const ColW = { r32: 168, r16: 148, qf: 130, sf: 116, final: 110 }
-  const GAP = 7
+  const ColW = { r32: 198, r16: 170, qf: 148, sf: 126, final: 128 }
+  const GAP = 8
 
   const leftR32 = R32_SLOTS.filter(s => s.side === 'left').sort((a, b) => a.position - b.position)
   const rightR32 = R32_SLOTS.filter(s => s.side === 'right').sort((a, b) => a.position - b.position)
 
+  function matchCell(matchId: string, homeTeam: TeamId | null, awayTeam: TeamId | null) {
+    const sc = getScore(matchId)
+    return (
+      <MatchCell
+        homeTeam={homeTeam} awayTeam={awayTeam}
+        winner={getWinner(matchId)}
+        homeScore={sc.home} awayScore={sc.away}
+        isPath={isPath(matchId)}
+        lang={lang} flagImages={flagImages}
+      />
+    )
+  }
+
+  const colOrder = [
+    { label: 'R32', w: ColW.r32 }, { label: 'R16', w: ColW.r16 },
+    { label: 'QF', w: ColW.qf }, { label: 'SF', w: ColW.sf },
+    { label: '', w: ColW.final },
+    { label: 'SF', w: ColW.sf }, { label: 'QF', w: ColW.qf },
+    { label: 'R16', w: ColW.r16 }, { label: 'R32', w: ColW.r32 },
+  ]
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', background: DARK, padding: '18px 20px', borderRadius: 14, fontFamily: 'Inter' }}>
+    <div style={{
+      display: 'flex', flexDirection: 'column',
+      background: DARK, padding: '14px 18px',
+      borderRadius: 14, fontFamily: 'Inter',
+      width: '100%', height: '100%',
+    }}>
       {/* Title */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
         <span style={{ color: GOLD, fontSize: 12, fontWeight: 700, letterSpacing: 4 }}>
           FIFA WORLD CUP 2026 · MY BRACKET
         </span>
       </div>
 
+      {/* Round labels row */}
+      <div style={{ display: 'flex', gap: GAP, justifyContent: 'center', marginBottom: 6 }}>
+        {colOrder.map((col, i) => (
+          <div key={i} style={{ width: col.w, display: 'flex', justifyContent: 'center' }}>
+            <span style={{ color: col.label ? GOLD : 'transparent', fontSize: 10, fontWeight: 700, letterSpacing: 2 }}>
+              {col.label || '.'}
+            </span>
+          </div>
+        ))}
+      </div>
+
       {/* Bracket columns */}
-      <div style={{ display: 'flex', gap: GAP, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: GAP, alignItems: 'flex-start', justifyContent: 'center' }}>
 
         {/* LEFT R32 */}
         <div style={{ position: 'relative', width: ColW.r32, height: CONTAINER_H, display: 'flex' }}>
           {leftR32.map(slot => (
             <div key={slot.matchId} style={{ position: 'absolute', top: r32Top(slot.position), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-              <MatchCell
-                homeTeam={r32HomeTeam(slot.homeSlot)}
-                awayTeam={r32AwayTeam(slot.awaySlot, slot.matchId)}
-                winner={getWinner(slot.matchId)}
-                isPath={isPath(slot.matchId)}
-              />
+              {matchCell(slot.matchId, r32HomeTeam(slot.homeSlot), r32AwayTeam(slot.awaySlot, slot.matchId))}
             </div>
           ))}
         </div>
@@ -178,12 +261,7 @@ export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
             const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
             return (
               <div key={matchId} style={{ position: 'absolute', top: r16Top(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                <MatchCell
-                  homeTeam={getWinner(struct?.homeFeeder ?? '')}
-                  awayTeam={getWinner(struct?.awayFeeder ?? '')}
-                  winner={getWinner(matchId)}
-                  isPath={isPath(matchId)}
-                />
+                {matchCell(matchId, getWinner(struct?.homeFeeder ?? ''), getWinner(struct?.awayFeeder ?? ''))}
               </div>
             )
           })}
@@ -196,12 +274,7 @@ export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
             const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
             return (
               <div key={matchId} style={{ position: 'absolute', top: qfTop(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                <MatchCell
-                  homeTeam={getWinner(struct?.homeFeeder ?? '')}
-                  awayTeam={getWinner(struct?.awayFeeder ?? '')}
-                  winner={getWinner(matchId)}
-                  isPath={isPath(matchId)}
-                />
+                {matchCell(matchId, getWinner(struct?.homeFeeder ?? ''), getWinner(struct?.awayFeeder ?? ''))}
               </div>
             )
           })}
@@ -210,21 +283,21 @@ export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
         {/* LEFT SF */}
         <div style={{ position: 'relative', width: ColW.sf, height: CONTAINER_H, display: 'flex' }}>
           <div style={{ position: 'absolute', top: sfTop(), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-            <MatchCell homeTeam={getWinner('QF_L1')} awayTeam={getWinner('QF_L2')} winner={getWinner('SF_L')} isPath={isPath('SF_L')} />
+            {matchCell('SF_L', getWinner('QF_L1'), getWinner('QF_L2'))}
           </div>
         </div>
 
         {/* FINAL */}
         <div style={{ position: 'relative', width: ColW.final, height: CONTAINER_H, display: 'flex' }}>
-          <div style={{ position: 'absolute', top: sfTop() - 12, left: 0, right: 0, height: 80, display: 'flex' }}>
-            <FinalCell champion={champion} />
+          <div style={{ position: 'absolute', top: sfTop() - 12, left: 0, right: 0, height: 90, display: 'flex' }}>
+            <FinalCell champion={champion} lang={lang} flagImages={flagImages} />
           </div>
         </div>
 
         {/* RIGHT SF */}
         <div style={{ position: 'relative', width: ColW.sf, height: CONTAINER_H, display: 'flex' }}>
           <div style={{ position: 'absolute', top: sfTop(), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-            <MatchCell homeTeam={getWinner('QF_R1')} awayTeam={getWinner('QF_R2')} winner={getWinner('SF_R')} isPath={isPath('SF_R')} />
+            {matchCell('SF_R', getWinner('QF_R1'), getWinner('QF_R2'))}
           </div>
         </div>
 
@@ -235,12 +308,7 @@ export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
             const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
             return (
               <div key={matchId} style={{ position: 'absolute', top: qfTop(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                <MatchCell
-                  homeTeam={getWinner(struct?.homeFeeder ?? '')}
-                  awayTeam={getWinner(struct?.awayFeeder ?? '')}
-                  winner={getWinner(matchId)}
-                  isPath={isPath(matchId)}
-                />
+                {matchCell(matchId, getWinner(struct?.homeFeeder ?? ''), getWinner(struct?.awayFeeder ?? ''))}
               </div>
             )
           })}
@@ -253,12 +321,7 @@ export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
             const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
             return (
               <div key={matchId} style={{ position: 'absolute', top: r16Top(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                <MatchCell
-                  homeTeam={getWinner(struct?.homeFeeder ?? '')}
-                  awayTeam={getWinner(struct?.awayFeeder ?? '')}
-                  winner={getWinner(matchId)}
-                  isPath={isPath(matchId)}
-                />
+                {matchCell(matchId, getWinner(struct?.homeFeeder ?? ''), getWinner(struct?.awayFeeder ?? ''))}
               </div>
             )
           })}
@@ -268,12 +331,7 @@ export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
         <div style={{ position: 'relative', width: ColW.r32, height: CONTAINER_H, display: 'flex' }}>
           {rightR32.map(slot => (
             <div key={slot.matchId} style={{ position: 'absolute', top: r32Top(slot.position), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-              <MatchCell
-                homeTeam={r32HomeTeam(slot.homeSlot)}
-                awayTeam={r32AwayTeam(slot.awaySlot, slot.matchId)}
-                winner={getWinner(slot.matchId)}
-                isPath={isPath(slot.matchId)}
-              />
+              {matchCell(slot.matchId, r32HomeTeam(slot.homeSlot), r32AwayTeam(slot.awaySlot, slot.matchId))}
             </div>
           ))}
         </div>
