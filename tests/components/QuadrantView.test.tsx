@@ -12,7 +12,7 @@ const filledGroups: GroupPick[] = GROUPS.map(g => ({
 const r32 = buildR32Matchups(filledGroups)
 const emptyKnockout: KnockoutMatchPick[] = []
 
-test('renders UL quadrant showing a team from group E (R32_L1 home is 1E = BRA)', () => {
+test('renders UL quadrant showing a team from group E (R32_L1 home is 1E = GER)', () => {
   render(
     <QuadrantView
       quadrant="UL"
@@ -26,8 +26,8 @@ test('renders UL quadrant showing a team from group E (R32_L1 home is 1E = BRA)'
       onBack={() => {}}
     />
   )
-  // R32_L1 homeSlot='1E' → group E rank[0] = 'BRA' → name "Brazil"
-  expect(screen.getByText('Brazil')).toBeInTheDocument()
+  // R32_L1 homeSlot='1E' → group E rank[0] = 'GER' → name "Germany"
+  expect(screen.getByText('Germany')).toBeInTheDocument()
 })
 
 test('calls onBack when back button is clicked', () => {

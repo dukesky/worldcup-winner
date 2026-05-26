@@ -28,5 +28,5 @@ test('calls onBack when back-to-home button is clicked', () => {
 
 test('shows fixture venue for group A', () => {
   render(<GroupStagePicker {...defaultProps} />)
-  expect(screen.getAllByText(/Rose Bowl/).length).toBeGreaterThan(0)
+  expect(screen.getAllByText(/Estadio Azteca/).length).toBeGreaterThan(0)
 })
