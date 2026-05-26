@@ -1,9 +1,33 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { t } from '@/lib/i18n'
-import type { BracketPicks, Language } from '@/lib/picks'
+import { t, getTeamName } from '@/lib/i18n'
+import { TEAMS } from '@/data/wc2026'
+import type { BracketPicks, Language, TeamId } from '@/lib/picks'
 
 interface Props { lang: Language }
+
+function generateCaption(lang: Language, champion: TeamId | null, finalHome: TeamId | null, finalAway: TeamId | null): string {
+  if (!champion) return ''
+  const c = TEAMS[champion]
+  if (!c) return ''
+  const championName = getTeamName(c, lang)
+  const cFlag = c.flag
+
+  const homeTeam = finalHome ? TEAMS[finalHome] : null
+  const awayTeam = finalAway ? TEAMS[finalAway] : null
+  const hFlag = homeTeam?.flag ?? ''
+  const aFlag = awayTeam?.flag ?? ''
+  const homeName = homeTeam ? getTeamName(homeTeam, lang) : 'TBD'
+  const awayName = awayTeam ? getTeamName(awayTeam, lang) : 'TBD'
+
+  if (lang === 'cn') {
+    return `我预测的世界杯冠军是：${cFlag} ${championName}！决赛对阵：${hFlag} ${homeName} vs ${aFlag} ${awayName}。截图存证，赛后见分晓！🏆 #FIFA世界杯2026`
+  }
+  if (lang === 'es') {
+    return `¡Mi predicción del campeón del Mundial: ${cFlag} ${championName}! Final: ${hFlag} ${homeName} vs ${aFlag} ${awayName}. ¡Guarda esto — ¡veremos quién tiene razón! 🏆 #FIFAWorldCup2026`
+  }
+  return `My World Cup champion prediction: ${cFlag} ${championName}! Final: ${hFlag} ${homeName} vs ${aFlag} ${awayName}. Screenshot this — let's see who's right! 🏆 #FIFAWorldCup2026`
+}
 
 export function SharePage({ lang }: Props) {
   const [bracketUrl, setBracketUrl] = useState<string | null>(null)
@@ -11,6 +35,8 @@ export function SharePage({ lang }: Props) {
   const [celebrationUrl, setCelebrationUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [caption, setCaption] = useState('')
+  const [captionCopied, setCaptionCopied] = useState(false)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('wc2026_picks')
@@ -29,13 +55,16 @@ export function SharePage({ lang }: Props) {
       return
     }
 
-    const champion = picks.knockout.find(m => m.matchId === 'FINAL')?.winner
+    const champion = picks.knockout.find(m => m.matchId === 'FINAL')?.winner ?? null
+    const finalHome = picks.knockout.find(m => m.matchId === 'SF_L')?.winner ?? null
+    const finalAway = picks.knockout.find(m => m.matchId === 'SF_R')?.winner ?? null
+    setCaption(generateCaption(lang, champion, finalHome, finalAway))
 
     const postJson = (url: string) =>
       fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(picks) })
 
     Promise.all([
-      // Bracket image (bracket only)
+      // Bracket image
       postJson('/api/generate-bracket')
         .then(r => { if (!r.ok) throw new Error(`Bracket API returned ${r.status}`); return r.blob() })
         .then(b => URL.createObjectURL(b)),
@@ -63,7 +92,7 @@ export function SharePage({ lang }: Props) {
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [lang])
 
   async function download(url: string, filename: string) {
     try {
@@ -76,8 +105,17 @@ export function SharePage({ lang }: Props) {
       a.click()
       URL.revokeObjectURL(objectUrl)
     } catch {
-      // Fallback: open in new tab
       window.open(url, '_blank')
+    }
+  }
+
+  async function handleCopyCaption() {
+    try {
+      await navigator.clipboard.writeText(caption)
+      setCaptionCopied(true)
+      setTimeout(() => setCaptionCopied(false), 2000)
+    } catch {
+      // Fallback: select the text element
     }
   }
 
@@ -145,10 +183,45 @@ export function SharePage({ lang }: Props) {
           </div>
         )}
 
-        <p className="text-center text-[#8a9bc0] text-sm">{t(lang, 'shareHint')}</p>
+        {/* Auto-generated share caption */}
+        {caption && (
+          <div className="bg-[#0c1526] border border-[#1a2847] rounded-xl p-4">
+            <div className="text-[#ffd700] text-xs font-bold uppercase tracking-wider mb-3">
+              {lang === 'cn' ? '分享文字' : lang === 'es' ? 'Texto para compartir' : 'Share Caption'}
+            </div>
+            <p className="text-white text-sm leading-relaxed mb-4 select-all">{caption}</p>
+            <button
+              onClick={handleCopyCaption}
+              className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all ${
+                captionCopied
+                  ? 'bg-green-600 text-white'
+                  : 'bg-[#1a2847] text-[#ffd700] hover:bg-[#1e3060] border border-[#ffd700]/30'
+              }`}
+            >
+              {captionCopied ? t(lang, 'captionCopied') : t(lang, 'copyCaption')}
+            </button>
+          </div>
+        )}
+
+        {/* WeChat sharing guide */}
+        <div className="bg-[#0c1526] border border-[#1a2847] rounded-xl p-4">
+          <div className="text-[#ffd700] text-sm font-bold mb-3">
+            📱 {t(lang, 'shareGuideTitle')}
+          </div>
+          <ol className="space-y-2">
+            {[t(lang, 'shareStep1'), t(lang, 'shareStep2'), t(lang, 'shareStep3')].map((step, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-[#8a9bc0]">
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-3 pt-3 border-t border-[#1a2847] text-[#4a5a7a] text-xs">
+            {t(lang, 'shareHint')}
+          </div>
+        </div>
 
         <a href="/" className="text-center text-[#ffd700]/60 text-xs hover:text-[#ffd700] transition-colors">
-          ← Start a new prediction
+          ← {lang === 'cn' ? '重新开始预测' : lang === 'es' ? 'Empezar de nuevo' : 'Start a new prediction'}
         </a>
       </div>
     </div>

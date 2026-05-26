@@ -5,8 +5,10 @@ const GOLD = '#ffd700'
 const DARK = '#060b18'
 const DIM_BORDER = '#1a2847'
 
-const RANK_BG = ['#256325', '#1e4a6e', '#6e520d', '#1a2535']
-const RANK_TEXT = ['#b8ffb8', '#a8d8f8', '#f0c840', '#4a5a7a']
+// Rank-specific colors: 1st (green), 2nd (blue), 3rd (amber), 4th (gray)
+const RANK_BG = ['#1e4a14', '#123a5e', '#5a3e0a', '#111d30']
+const RANK_TEXT = ['#80ff80', '#80c8f8', '#f8c020', '#3a4a6a']
+const RANK_LABEL_COLOR = ['#4caf50', '#5b9bd5', '#c8921a', '#2a3a5a']
 
 function getName(tid: string, lang: Language): string {
   const t = TEAMS[tid]
@@ -38,12 +40,11 @@ function GroupCard({ id, teams, lang, flagImages }: GroupCardProps) {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
         borderBottom: `1px solid ${DIM_BORDER}`,
         paddingBottom: 7,
         marginBottom: 8,
       }}>
-        <span style={{ color: GOLD, fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>GROUP {id}</span>
+        <span style={{ color: GOLD, fontSize: 13, fontWeight: 800, letterSpacing: 2 }}>GROUP {id}</span>
       </div>
 
       {/* Team rows */}
@@ -51,8 +52,18 @@ function GroupCard({ id, teams, lang, flagImages }: GroupCardProps) {
         {teams.map((t, i) => {
           const src = t.tid ? (flagImages[t.tid] ?? '') : ''
           const name = t.tid ? getName(t.tid, lang) : 'TBD'
+          const isAdvancing = i < 2
+
           return (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+            <div key={i} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flex: 1,
+              background: isAdvancing ? `${RANK_BG[i]}60` : 'transparent',
+              borderRadius: 5,
+              padding: '2px 4px',
+            }}>
               {/* Rank badge */}
               <div style={{
                 width: 20, height: 20,
@@ -60,6 +71,7 @@ function GroupCard({ id, teams, lang, flagImages }: GroupCardProps) {
                 borderRadius: 4,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
+                border: `1px solid ${RANK_LABEL_COLOR[i]}40`,
               }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: RANK_TEXT[i] }}>{i + 1}</span>
               </div>
@@ -72,9 +84,11 @@ function GroupCard({ id, teams, lang, flagImages }: GroupCardProps) {
 
               {/* Team name */}
               <span style={{
-                fontSize: 14, fontWeight: i < 2 ? 600 : 400,
-                color: i < 2 ? '#d0e8ff' : '#5a6a80',
+                fontSize: 14,
+                fontWeight: isAdvancing ? 700 : 400,
+                color: isAdvancing ? '#e0f0ff' : '#4a5a70',
                 flex: 1,
+                overflow: 'hidden',
               }}>
                 {name}
               </span>
@@ -121,9 +135,22 @@ export function GroupStageImageTemplate({ picks, flagImages }: Props) {
     }}>
       {/* Title */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-        <span style={{ color: GOLD, fontSize: 14, fontWeight: 700, letterSpacing: 4 }}>
+        <span style={{ color: GOLD, fontSize: 15, fontWeight: 800, letterSpacing: 4 }}>
           FIFA WORLD CUP 2026 · GROUP STAGE
         </span>
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 10 }}>
+        {[
+          { color: '#4caf50', label: lang === 'cn' ? '第一名晋级' : lang === 'es' ? '1° - Clasifica' : '1st — Advances' },
+          { color: '#5b9bd5', label: lang === 'cn' ? '第二名晋级' : lang === 'es' ? '2° - Clasifica' : '2nd — Advances' },
+        ].map((item, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: item.color }} />
+            <span style={{ fontSize: 9, color: '#6a7a9a', fontWeight: 500 }}>{item.label}</span>
+          </div>
+        ))}
       </div>
 
       {/* 3-column grid, fills remaining height */}

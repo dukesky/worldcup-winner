@@ -60,6 +60,7 @@ export default function PredictPage() {
           onScoreChange={setKnockoutScore}
           onWildcardSelect={setWildcardSelection}
           onBack={() => setKnockoutView('overview')}
+          onNextQuadrant={(next: QuadrantId) => setKnockoutView(next)}
         />
       )
     }
@@ -84,6 +85,7 @@ export default function PredictPage() {
         r32Matchups={r32Matchups}
         lang={lang}
         onWinnerSelect={setKnockoutWinner}
+        onScoreChange={setKnockoutScore}
         onBack={() => { setStep('knockout'); setKnockoutView('overview') }}
         onChampionSelected={() => setStep('champion')}
       />

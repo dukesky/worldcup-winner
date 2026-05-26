@@ -12,13 +12,17 @@ interface Props {
   teams: typeof TEAMS
   pick: GroupPick
   lang: Language
+  selectedTeamId?: string | null
   onRankingChange: (ranking: [TeamId, TeamId, TeamId, TeamId]) => void
   onScoreChange: (matchKey: string, home: number | null, away: number | null) => void
+  onTeamSelect?: (teamId: TeamId) => void
 }
 
-export function GroupCard({ group, teams, pick, lang, onRankingChange }: Props) {
+export function GroupCard({ group, teams, pick, lang, selectedTeamId, onRankingChange, onTeamSelect }: Props) {
   function handleTeamClick(teamId: TeamId) {
-    // Don't allow interacting with the auto-filled 4th place slot
+    // Always notify for highlighting — do this before any early returns
+    onTeamSelect?.(teamId)
+
     const currentRankIdx = pick.ranking.findIndex(r => r === teamId)
     if (currentRankIdx === 3) return  // slot 3 is auto-filled, not user-selectable
 
@@ -58,6 +62,7 @@ export function GroupCard({ group, teams, pick, lang, onRankingChange }: Props) 
           const rankIdx = pick.ranking.findIndex(r => r === teamId)
           const isRanked = rankIdx !== -1 && !!pick.ranking[rankIdx]
           const isAutoFilled = isRanked && rankIdx === 3
+          const isSelected = selectedTeamId === teamId
 
           return (
             <button
@@ -65,12 +70,14 @@ export function GroupCard({ group, teams, pick, lang, onRankingChange }: Props) 
               data-testid={`team-${teamId}`}
               onClick={() => handleTeamClick(teamId as TeamId)}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 border transition-all text-left ${
-                isAutoFilled
+                isSelected && !isRanked
+                  ? 'bg-[#0c1a30] border-[#ffd700]/50 ring-1 ring-[#ffd700]/20'
+                  : isAutoFilled
                   ? `${RANK_BG[rankIdx]} opacity-60 cursor-default`
                   : isRanked
                     ? RANK_BG[rankIdx]
                     : 'bg-[#0c1526] border-[#1a2847] hover:border-[#2a3a60]'
-              }`}
+              } ${isSelected && isRanked ? 'ring-1 ring-[#ffd700]/30' : ''}`}
             >
               <span className={`text-sm font-bold w-5 ${isRanked ? RANK_COLORS[rankIdx] : 'text-[#2a3a5a]'}`}>
                 {isRanked ? RANK_BADGES[rankIdx] : '·'}
