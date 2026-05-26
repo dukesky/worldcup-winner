@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { t, getTeamName } from '@/lib/i18n'
 import { TEAMS } from '@/data/wc2026'
 import type { BracketPicks, Language, TeamId } from '@/lib/picks'
@@ -29,6 +29,22 @@ function generateCaption(lang: Language, champion: TeamId | null, finalHome: Tea
   return `My World Cup champion prediction: ${cFlag} ${championName}! Final: ${hFlag} ${homeName} vs ${aFlag} ${awayName}. Screenshot this — let's see who's right! 🏆 #FIFAWorldCup2026`
 }
 
+function compressPhoto(dataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const MAX = 800
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/jpeg', 0.82))
+    }
+    img.src = dataUrl
+  })
+}
+
 export function SharePage({ lang }: Props) {
   const [bracketUrl, setBracketUrl] = useState<string | null>(null)
   const [groupStageUrl, setGroupStageUrl] = useState<string | null>(null)
@@ -37,6 +53,10 @@ export function SharePage({ lang }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [caption, setCaption] = useState('')
   const [captionCopied, setCaptionCopied] = useState(false)
+  const [regenLoading, setRegenLoading] = useState(false)
+  const [champion, setChampion] = useState<TeamId | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('wc2026_picks')
@@ -58,6 +78,7 @@ export function SharePage({ lang }: Props) {
     const champion = picks.knockout.find(m => m.matchId === 'FINAL')?.winner ?? null
     const finalHome = picks.knockout.find(m => m.matchId === 'SF_L')?.winner ?? null
     const finalAway = picks.knockout.find(m => m.matchId === 'SF_R')?.winner ?? null
+    setChampion(champion)
     setCaption(generateCaption(lang, champion, finalHome, finalAway))
 
     const postJson = (url: string) =>
@@ -93,6 +114,37 @@ export function SharePage({ lang }: Props) {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }, [lang])
+
+  async function handlePhotoChange(file: File | undefined) {
+    if (!file || !champion) return
+    setRegenLoading(true)
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const raw = e.target?.result as string
+        const compressed = await compressPhoto(raw)
+        // Update sessionStorage so the photo persists on next visit
+        const stored = sessionStorage.getItem('wc2026_picks')
+        if (stored) {
+          const picks = JSON.parse(stored)
+          picks.photoDataUrl = compressed
+          sessionStorage.setItem('wc2026_picks', JSON.stringify(picks))
+        }
+        const res = await fetch('/api/generate-celebration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photo: compressed, championTeam: champion, language: lang }),
+        })
+        const d = res.ok ? await res.json() : null
+        setCelebrationUrl(d?.imageUrl ?? null)
+      } catch {
+        // silently keep old celebration if regen fails
+      } finally {
+        setRegenLoading(false)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
 
   async function download(url: string, filename: string) {
     try {
@@ -171,15 +223,46 @@ export function SharePage({ lang }: Props) {
         )}
 
         {/* Celebration image */}
-        {celebrationUrl && (
+        {champion && (
           <div className="flex flex-col items-center gap-4">
-            <img src={celebrationUrl} alt="Your celebration" className="w-full max-w-lg block rounded-xl" style={{ display: 'block' }} />
-            <button
-              onClick={() => download(celebrationUrl, 'wc2026-celebration.png')}
-              className="bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black px-8 py-3 rounded-xl hover:scale-105 transition-transform"
-            >
-              {t(lang, 'downloadCelebration')}
-            </button>
+            {celebrationUrl && (
+              <img src={celebrationUrl} alt="Your celebration" className="w-full max-w-lg block rounded-xl" style={{ display: 'block' }} />
+            )}
+
+            {/* Hidden file inputs */}
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => handlePhotoChange(e.target.files?.[0])} />
+            <input ref={cameraRef} type="file" accept="image/*" capture="user" className="hidden" onChange={e => handlePhotoChange(e.target.files?.[0])} />
+
+            <div className="flex flex-wrap justify-center gap-3">
+              {celebrationUrl && (
+                <button
+                  onClick={() => download(celebrationUrl, 'wc2026-celebration.png')}
+                  className="bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black px-8 py-3 rounded-xl hover:scale-105 transition-transform"
+                >
+                  {t(lang, 'downloadCelebration')}
+                </button>
+              )}
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={regenLoading}
+                className="border border-[#ffd700]/60 text-[#ffd700]/80 text-sm font-bold px-5 py-3 rounded-xl hover:bg-[#ffd700]/10 transition-colors disabled:opacity-40"
+              >
+                {regenLoading ? '⏳' : celebrationUrl ? (lang === 'cn' ? '换张照片' : lang === 'es' ? 'Cambiar foto' : 'Change photo') : (lang === 'cn' ? '上传照片' : lang === 'es' ? 'Subir foto' : 'Upload photo')}
+              </button>
+              <button
+                onClick={() => cameraRef.current?.click()}
+                disabled={regenLoading}
+                className="border border-[#ffd700]/60 text-[#ffd700]/80 text-sm font-bold px-5 py-3 rounded-xl hover:bg-[#ffd700]/10 transition-colors disabled:opacity-40"
+              >
+                {lang === 'cn' ? '拍自拍' : lang === 'es' ? 'Tomar selfie' : 'Take selfie'}
+              </button>
+            </div>
+
+            {regenLoading && (
+              <p className="text-[#8a9bc0] text-sm animate-pulse">
+                {lang === 'cn' ? '正在生成庆典图...' : lang === 'es' ? 'Generando imagen...' : 'Generating your celebration image…'}
+              </p>
+            )}
           </div>
         )}
 
