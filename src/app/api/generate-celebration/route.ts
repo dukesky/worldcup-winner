@@ -8,6 +8,9 @@ const PROMPT_TEMPLATES: Record<Language, (team: string) => string> = {
   es: (team) => `Ilustración estilo caricatura anime de una persona celebrando con los jugadores del equipo nacional de fútbol de ${team}. Trofeo de la Copa Mundial, confeti colorido, estadio lleno de fanáticos, atmósfera de celebración vibrante.`,
 }
 
+// Gemini 3.1 Flash Image Preview supports both text→image and image editing
+const MODEL = 'google/gemini-3.1-flash-image-preview'
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -28,28 +31,31 @@ export async function POST(req: NextRequest) {
     const teamName = lang === 'cn' ? team.nameZh : lang === 'es' ? team.nameEs : team.name
     const prompt = PROMPT_TEMPLATES[lang](teamName)
 
-    // Use flux for text-to-image (no photo), gpt-image-1 for image editing (with photo)
-    const model = photo ? 'openai/gpt-image-1' : 'black-forest-labs/flux-1.1-pro'
-
-    const requestBody: Record<string, unknown> = {
-      model,
-      prompt,
-      n: 1,
-      size: '1024x1024',
-    }
-
-    // Include reference photo if provided
-    if (photo) {
-      requestBody.image = photo
-    }
-
     const apiKey = process.env.OPENROUTER_API_KEY
     if (!apiKey) {
       console.error('OPENROUTER_API_KEY not set')
       return NextResponse.json({ error: 'Image generation not configured' }, { status: 503 })
     }
 
-    const response = await fetch('https://openrouter.ai/api/v1/images/generations', {
+    // Build message content — include photo if provided
+    type ContentPart =
+      | { type: 'text'; text: string }
+      | { type: 'image_url'; image_url: { url: string } }
+    const content: ContentPart[] = []
+    if (photo) {
+      content.push({ type: 'image_url', image_url: { url: photo } })
+    }
+    content.push({ type: 'text', text: prompt })
+
+    const model = MODEL
+
+    const requestBody = {
+      model,
+      messages: [{ role: 'user', content: content.length === 1 ? prompt : content }],
+      modalities: ['image'],
+    }
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -66,11 +72,16 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json()
-    const raw = data.data?.[0]
+
+    // Response: choices[0].message.images[0].image_url.url (base64 data URI)
+    const msg = data.choices?.[0]?.message
     const imageUrl: string | null =
-      raw?.url ?? (raw?.b64_json ? `data:image/png;base64,${raw.b64_json}` : null)
+      msg?.images?.[0]?.image_url?.url ??
+      msg?.content?.[0]?.image_url?.url ??
+      null
 
     if (!imageUrl) {
+      console.error('Unexpected response shape:', JSON.stringify(data).slice(0, 300))
       return NextResponse.json({ error: 'No image returned' }, { status: 502 })
     }
 
