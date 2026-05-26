@@ -73,7 +73,7 @@ function GroupCard({ id, teams, lang, flagImages }: GroupCardProps) {
                 flexShrink: 0,
                 border: `1px solid ${RANK_LABEL_COLOR[i]}40`,
               }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: RANK_TEXT[i] }}>{i + 1}</span>
+                <div style={{ fontSize: 11, fontWeight: 700, color: RANK_TEXT[i], display: 'flex' }}>{i + 1}</div>
               </div>
 
               {/* Flag */}
@@ -83,15 +83,16 @@ function GroupCard({ id, teams, lang, flagImages }: GroupCardProps) {
               }
 
               {/* Team name */}
-              <span style={{
+              <div style={{
                 fontSize: 14,
                 fontWeight: isAdvancing ? 700 : 400,
                 color: isAdvancing ? '#e0f0ff' : '#4a5a70',
                 flex: 1,
-                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
               }}>
                 {name}
-              </span>
+              </div>
             </div>
           )
         })}
