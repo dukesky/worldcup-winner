@@ -1,5 +1,5 @@
 'use client'
-import { TEAMS } from '@/data/wc2026'
+import { TEAMS, R32_SLOTS } from '@/data/wc2026'
 import { t, getTeamName } from '@/lib/i18n'
 import type { Language, KnockoutMatchPick } from '@/lib/picks'
 import type { R32Matchup } from '@/lib/bracket'
@@ -23,14 +23,23 @@ const QUADRANTS: Record<QuadrantId, { r32: string[]; r16: string[]; qf: string; 
   LR: { r32: ['R32_R5','R32_R6','R32_R7','R32_R8'], r16: ['R16_R3','R16_R4'], qf: 'QF_R2', labelKey: 'quadrantLR' },
 }
 
+// R32 slots that require a wildcard 3rd-place team selection
+const WILDCARD_MATCH_IDS = new Set(R32_SLOTS.filter(s => s.awaySlot.startsWith('3')).map(s => s.matchId))
+
 function getWinner(matchId: string, picks: KnockoutMatchPick[]): string | null {
   return picks.find(p => p.matchId === matchId)?.winner ?? null
 }
 
 export function KnockoutOverview({ r32Matchups, knockoutPicks, wildcardSelections, lang, onSelectQuadrant, onBack, onProceedFinalFour }: Props) {
-  const allComplete = (Object.keys(QUADRANTS) as QuadrantId[]).every(q =>
-    getWinner(QUADRANTS[q].qf, knockoutPicks) !== null
-  )
+  const quadrantIds = Object.keys(QUADRANTS) as QuadrantId[]
+  const allComplete = quadrantIds.every(q => getWinner(QUADRANTS[q].qf, knockoutPicks) !== null)
+
+  // Find the first incomplete quadrant to highlight as "next up"
+  const nextIncompleteIdx = quadrantIds.findIndex(q => getWinner(QUADRANTS[q].qf, knockoutPicks) === null)
+  const nextIncomplete = nextIncompleteIdx >= 0 ? quadrantIds[nextIncompleteIdx] : null
+
+  // Count unset wildcards across all quadrants
+  const unsetWildcardCount = Array.from(WILDCARD_MATCH_IDS).filter(matchId => !wildcardSelections[matchId]).length
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8 pt-14">
@@ -42,16 +51,28 @@ export function KnockoutOverview({ r32Matchups, knockoutPicks, wildcardSelection
         <div className="w-20" />
       </div>
 
-      <p className="text-[#8a9bc0] text-sm text-center mb-6">
+      <p className="text-[#8a9bc0] text-sm text-center mb-4">
         {t(lang, 'tapToPickWinners')}
       </p>
 
+      {/* Wildcard reminder */}
+      {unsetWildcardCount > 0 && (
+        <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg px-3 py-2 mb-4 text-xs text-amber-400 text-center">
+          {t(lang, 'wildcardsMissing')}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4 mb-6">
-        {(Object.keys(QUADRANTS) as QuadrantId[]).map(qId => {
+        {quadrantIds.map(qId => {
           const q = QUADRANTS[qId]
           const complete = getWinner(q.qf, knockoutPicks) !== null
           const qfWinnerId = complete ? getWinner(q.qf, knockoutPicks) : null
           const qfWinner = qfWinnerId ? TEAMS[qfWinnerId] : null
+          const isNextUp = !complete && qId === nextIncomplete
+
+          // Check if this quadrant has unset wildcards
+          const quadrantWildcards = q.r32.filter(id => WILDCARD_MATCH_IDS.has(id))
+          const hasUnsetWildcard = quadrantWildcards.some(id => !wildcardSelections[id])
 
           const r32Teams = q.r32.flatMap(matchId => {
             const m = r32Matchups.find(x => x.matchId === matchId)
@@ -69,6 +90,8 @@ export function KnockoutOverview({ r32Matchups, knockoutPicks, wildcardSelection
               className={`rounded-xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-100 ${
                 complete
                   ? 'border-[#ffd700] bg-[#1a2e0a]'
+                  : isNextUp
+                  ? 'border-[#3a6080] bg-[#0c1a26] hover:border-[#5a90b0] ring-1 ring-[#3a6080]/50'
                   : 'border-[#1a2847] bg-[#0c1526] hover:border-[#3a5080]'
               }`}
             >
@@ -76,6 +99,10 @@ export function KnockoutOverview({ r32Matchups, knockoutPicks, wildcardSelection
                 <span className="text-[#ffd700] text-xs font-bold">{t(lang, q.labelKey)}</span>
                 {complete
                   ? <span className="text-green-400 text-[10px]">✓</span>
+                  : isNextUp
+                  ? <span className="text-sky-400 text-[9px] font-bold">
+                      {lang === 'cn' ? '下一步' : lang === 'es' ? 'Siguiente' : 'Next up'}
+                    </span>
                   : <span className="text-[#4a5a7a] text-[10px]">{t(lang, 'quadrantTapFill')}</span>
                 }
               </div>
@@ -92,6 +119,12 @@ export function KnockoutOverview({ r32Matchups, knockoutPicks, wildcardSelection
                   {r32Teams.length > 6 && (
                     <span className="text-[#4a5a7a] text-[10px] self-center">+{r32Teams.length - 6}</span>
                   )}
+                </div>
+              )}
+              {/* Wildcard indicator */}
+              {!complete && hasUnsetWildcard && (
+                <div className="mt-2 text-[8px] text-amber-400/80">
+                  {lang === 'cn' ? '⚠ 需选第三名球队' : lang === 'es' ? '⚠ Equipo 3° pendiente' : '⚠ 3rd-place pick needed'}
                 </div>
               )}
             </button>

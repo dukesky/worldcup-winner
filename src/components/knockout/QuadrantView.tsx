@@ -14,6 +14,11 @@ const QUADRANT_MATCHES: Record<QuadrantId, { r32: string[]; r16: string[]; qf: s
   LR: { r32: ['R32_R5','R32_R6','R32_R7','R32_R8'], r16: ['R16_R3','R16_R4'], qf: 'QF_R2' },
 }
 
+// Next quadrant in fill order (UL → LL → UR → LR)
+const NEXT_QUADRANT: Record<QuadrantId, QuadrantId | null> = {
+  UL: 'LL', LL: 'UR', UR: 'LR', LR: null,
+}
+
 interface Props {
   quadrant: QuadrantId
   r32Matchups: R32Matchup[]
@@ -24,6 +29,7 @@ interface Props {
   onScoreChange: (matchId: string, home: number | null, away: number | null) => void
   onWildcardSelect: (matchId: string, teamId: TeamId) => void
   onBack: () => void
+  onNextQuadrant?: (next: QuadrantId) => void
 }
 
 function getWinner(matchId: string, picks: KnockoutMatchPick[]): TeamId | null {
@@ -141,7 +147,7 @@ function MatchBlock({ matchId, homeId, awayId, awayOptions, winner, score, lang,
         )}
       </button>
 
-      {/* Center row: score inputs with winner arrow between the two teams */}
+      {/* Score inputs */}
       {bothReady && !disabled ? (
         <div className="flex items-center justify-center gap-1 py-1">
           <input
@@ -196,7 +202,7 @@ function MatchBlock({ matchId, homeId, awayId, awayOptions, winner, score, lang,
   )
 }
 
-export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSelections, lang, onWinnerSelect, onScoreChange, onWildcardSelect, onBack }: Props) {
+export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSelections, lang, onWinnerSelect, onScoreChange, onWildcardSelect, onBack, onNextQuadrant }: Props) {
   const qDef = QUADRANT_MATCHES[quadrant]
 
   const r32Data = qDef.r32.map(id => ({
@@ -228,6 +234,7 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
   }
 
   const quadrantComplete = qfData.winner !== null
+  const nextQ = NEXT_QUADRANT[quadrant]
 
   const labelMap: Record<QuadrantId, string> = {
     UL: t(lang, 'quadrantUL'),
@@ -326,13 +333,37 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
         </div>
       </div>
 
-      <div className="mt-6">
-        <button
-          onClick={onBack}
-          className="w-full border border-[#1e2d50] text-[#8a9bc0] py-3 rounded-xl font-semibold hover:border-[#ffd700] transition-colors"
-        >
-          {t(lang, 'backToOverview')}
-        </button>
+      {/* Navigation footer */}
+      <div className="mt-6 flex flex-col gap-2">
+        {quadrantComplete && nextQ && onNextQuadrant ? (
+          <>
+            <button
+              onClick={() => onNextQuadrant(nextQ)}
+              className="w-full bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black py-3 rounded-xl hover:scale-[1.02] transition-transform"
+            >
+              {t(lang, 'nextBlock')}
+            </button>
+            <button
+              onClick={onBack}
+              className="w-full border border-[#1e2d50] text-[#8a9bc0] py-2 rounded-xl text-sm hover:border-[#ffd700] transition-colors"
+            >
+              {t(lang, 'backToOverview')}
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={onBack}
+            className={`w-full py-3 rounded-xl font-semibold transition-all ${
+              quadrantComplete
+                ? 'bg-[#1a2e0a] border border-[#ffd700] text-[#ffd700] hover:bg-[#1f3510]'
+                : 'border border-[#1e2d50] text-[#8a9bc0] hover:border-[#ffd700]'
+            }`}
+          >
+            {quadrantComplete
+              ? `${t(lang, 'backToOverview')} ✓`
+              : t(lang, 'backToOverview')}
+          </button>
+        )}
       </div>
     </div>
   )
