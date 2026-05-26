@@ -1,4 +1,4 @@
-import { TEAMS, GROUPS, KNOCKOUT_STRUCTURE, R32_SLOTS } from '@/data/wc2026'
+import { TEAMS, KNOCKOUT_STRUCTURE, R32_SLOTS } from '@/data/wc2026'
 import type { BracketPicks, TeamId } from '@/lib/picks'
 
 const GOLD = '#ffd700'
@@ -6,9 +6,9 @@ const DARK = '#060b18'
 const NAVY = '#0c1526'
 const DIM_BORDER = '#1a2847'
 
-const CARD_H = 38
-const INNER_GAP = 4
-const OUTER_GAP = 10
+const CARD_H = 56
+const INNER_GAP = 6
+const OUTER_GAP = 18
 
 function r32Top(pos: number) {
   const pair = Math.floor((pos - 1) / 2)
@@ -24,7 +24,7 @@ function qfTop(i: number) {
 function sfTop() {
   return (qfTop(0) + CARD_H / 2 + qfTop(1) + CARD_H / 2) / 2 - CARD_H / 2
 }
-const CONTAINER_H = r32Top(8) + CARD_H + 10
+const CONTAINER_H = r32Top(8) + CARD_H + 16
 
 interface TeamRowProps {
   tid: TeamId | null
@@ -35,18 +35,18 @@ interface TeamRowProps {
 
 function TeamRow({ tid, isWinner, isPath: path, isBottom }: TeamRowProps) {
   const tm = tid ? TEAMS[tid] : null
-  const textColor = isWinner && path ? GOLD : isWinner ? '#fff' : '#7a8fb0'
-  const fontWeight = isWinner && path ? 700 : 400
+  const textColor = isWinner && path ? GOLD : isWinner ? '#ffffff' : '#7a8fb0'
+  const fontWeight = isWinner ? 700 : 400
   return (
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: 4,
-      padding: '3px 7px',
+      gap: 6,
+      padding: '4px 10px',
       borderTop: isBottom ? `1px solid ${DIM_BORDER}40` : 'none',
     }}>
-      <span style={{ fontSize: 11 }}>{tm?.flag ?? ''}</span>
-      <span style={{ fontSize: 9, fontWeight, color: textColor }}>
+      <span style={{ fontSize: 15 }}>{tm?.flag ?? ''}</span>
+      <span style={{ fontSize: 12, fontWeight, color: textColor }}>
         {tm?.name ?? 'TBD'}
       </span>
     </div>
@@ -67,9 +67,10 @@ function MatchCell({ homeTeam, awayTeam, winner, isPath }: MatchCellProps) {
     <div style={{
       background: bg,
       border: `1px solid ${border}`,
-      borderRadius: 4,
+      borderRadius: 6,
       overflow: 'hidden',
       height: CARD_H,
+      width: '100%',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
@@ -90,57 +91,30 @@ function FinalCell({ champion }: FinalCellProps) {
     <div style={{
       background: '#1a3a0a',
       border: `2px solid ${GOLD}`,
-      borderRadius: 8,
-      height: 60,
+      borderRadius: 10,
+      height: 80,
+      width: '100%',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
+      gap: 2,
     }}>
-      <div style={{ display: 'flex', color: GOLD, fontSize: 7, fontWeight: 700, letterSpacing: 2 }}>FINAL</div>
-      <div style={{ display: 'flex', color: GOLD, fontSize: 16 }}>{tm?.flag ?? ''}</div>
-      <div style={{ display: 'flex', color: GOLD, fontSize: 9, fontWeight: 700 }}>{tm?.name ?? ''}</div>
-      <div style={{ display: 'flex', color: '#4caf50', fontSize: 7, fontWeight: 700 }}>CHAMPION</div>
-    </div>
-  )
-}
-
-interface GroupCardProps {
-  id: string
-  teams: Array<{ tid: string; rank: number; team: typeof TEAMS[string] | null }>
-}
-
-const RANK_COLORS = ['#4caf50', '#5b7fa6', '#8a6a2a', '#2a3a5a']
-const RANK_TEXT_COLORS = ['#d0d8e8', '#8a9bc0', '#5a6a7a', '#2a3a5a']
-const RANK_SYMBOLS = ['①', '②', '③', '④']
-
-function GroupCard({ id, teams }: GroupCardProps) {
-  return (
-    <div style={{ background: '#0a1020', border: `1px solid ${DIM_BORDER}`, borderRadius: 5, padding: '5px 6px', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', color: GOLD, fontSize: 7, fontWeight: 700, letterSpacing: 1, borderBottom: `1px solid ${DIM_BORDER}`, paddingBottom: 3, marginBottom: 4 }}>
-        GROUP {id}
-      </div>
-      {teams.map((t, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
-          <span style={{ fontSize: 7, fontWeight: 700, color: RANK_COLORS[i], width: 8 }}>{RANK_SYMBOLS[i]}</span>
-          <span style={{ fontSize: 10 }}>{t.team?.flag ?? ''}</span>
-          <span style={{ fontSize: 8, color: RANK_TEXT_COLORS[i] }}>{t.team?.name ?? ''}</span>
-        </div>
-      ))}
+      <div style={{ display: 'flex', color: GOLD, fontSize: 9, fontWeight: 700, letterSpacing: 3 }}>FINAL</div>
+      <div style={{ display: 'flex', fontSize: 22 }}>{tm?.flag ?? ''}</div>
+      <div style={{ display: 'flex', color: GOLD, fontSize: 12, fontWeight: 700 }}>{tm?.name ?? '?'}</div>
+      <div style={{ display: 'flex', color: '#4caf50', fontSize: 9, fontWeight: 700, letterSpacing: 1 }}>CHAMPION</div>
     </div>
   )
 }
 
 export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
   const { groups, knockout } = picks
+  const wildcardSelections = picks.wildcardSelections ?? {}
   const champion = knockout.find(m => m.matchId === 'FINAL')?.winner ?? null
 
   function getWinner(matchId: string): TeamId | null {
     return knockout.find(m => m.matchId === matchId)?.winner ?? null
-  }
-
-  function feedWinner(feeder: string): TeamId | null {
-    return getWinner(feeder)
   }
 
   function isPath(matchId: string): boolean {
@@ -148,198 +122,163 @@ export function BracketImageTemplate({ picks }: { picks: BracketPicks }) {
     return !!champion && w === champion
   }
 
-  function r32TeamFromGroup(slot: string): TeamId | null {
+  function r32HomeTeam(slot: string): TeamId | null {
+    if (slot.length !== 2) return null
     const rank = parseInt(slot[0]) - 1
-    const groupId = slot[1]
-    const grp = groups.find(g => g.groupId === groupId)
-    if (!grp) return null
-    return grp.ranking[rank] || null
+    const grp = groups.find(g => g.groupId === slot[1])
+    return grp?.ranking[rank] ?? null
   }
 
-  const groupData = GROUPS.map(g => {
-    const pick = groups.find(p => p.groupId === g.id)
-    const ranking = pick?.ranking ?? ([] as string[])
-    return {
-      id: g.id,
-      teams: [0, 1, 2, 3].map(i => ({
-        tid: ranking[i] ?? '',
-        rank: i + 1,
-        team: ranking[i] ? TEAMS[ranking[i]] : null,
-      })),
+  function r32AwayTeam(slot: string, matchId: string): TeamId | null {
+    if (slot.length === 2) {
+      const rank = parseInt(slot[0]) - 1
+      const grp = groups.find(g => g.groupId === slot[1])
+      return grp?.ranking[rank] ?? null
     }
-  })
+    // wildcard slot — check wildcard selections
+    return wildcardSelections[matchId] ?? null
+  }
 
-  const ColW = { r32: 108, r16: 96, qf: 86, sf: 80, final: 76 }
-  const GAP = 5
+  const ColW = { r32: 168, r16: 148, qf: 130, sf: 116, final: 110 }
+  const GAP = 7
 
   const leftR32 = R32_SLOTS.filter(s => s.side === 'left').sort((a, b) => a.position - b.position)
   const rightR32 = R32_SLOTS.filter(s => s.side === 'right').sort((a, b) => a.position - b.position)
 
-  const leftGroups = groupData.filter((_, idx) => idx % 2 === 0)
-  const rightGroups = groupData.filter((_, idx) => idx % 2 === 1)
-
   return (
-    <div style={{ display: 'flex', background: DARK, padding: 14, borderRadius: 12, fontFamily: 'Inter' }}>
-
-      {/* === BRACKET SECTION === */}
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {/* Title */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-          <span style={{ color: GOLD, fontSize: 9, fontWeight: 700, letterSpacing: 3 }}>
-            FIFA WORLD CUP 2026 · MY BRACKET
-          </span>
-        </div>
-
-        {/* All bracket columns */}
-        <div style={{ display: 'flex', gap: GAP, alignItems: 'flex-start' }}>
-
-          {/* LEFT R32 */}
-          <div style={{ position: 'relative', width: ColW.r32, height: CONTAINER_H, display: 'flex' }}>
-            {leftR32.map(slot => (
-              <div key={slot.matchId} style={{ position: 'absolute', top: r32Top(slot.position), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                <MatchCell
-                  homeTeam={slot.homeSlot.length === 2 ? r32TeamFromGroup(slot.homeSlot) : null}
-                  awayTeam={slot.awaySlot.length === 2 ? r32TeamFromGroup(slot.awaySlot) : null}
-                  winner={getWinner(slot.matchId)}
-                  isPath={isPath(slot.matchId)}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* LEFT R16 */}
-          <div style={{ position: 'relative', width: ColW.r16, height: CONTAINER_H, display: 'flex' }}>
-            {[0, 1, 2, 3].map(i => {
-              const matchId = `R16_L${i + 1}`
-              const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
-              return (
-                <div key={matchId} style={{ position: 'absolute', top: r16Top(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                  <MatchCell
-                    homeTeam={feedWinner(struct?.homeFeeder ?? '')}
-                    awayTeam={feedWinner(struct?.awayFeeder ?? '')}
-                    winner={getWinner(matchId)}
-                    isPath={isPath(matchId)}
-                  />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* LEFT QF */}
-          <div style={{ position: 'relative', width: ColW.qf, height: CONTAINER_H, display: 'flex' }}>
-            {[0, 1].map(i => {
-              const matchId = `QF_L${i + 1}`
-              const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
-              return (
-                <div key={matchId} style={{ position: 'absolute', top: qfTop(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                  <MatchCell
-                    homeTeam={feedWinner(struct?.homeFeeder ?? '')}
-                    awayTeam={feedWinner(struct?.awayFeeder ?? '')}
-                    winner={getWinner(matchId)}
-                    isPath={isPath(matchId)}
-                  />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* LEFT SF */}
-          <div style={{ position: 'relative', width: ColW.sf, height: CONTAINER_H, display: 'flex' }}>
-            <div style={{ position: 'absolute', top: sfTop(), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-              <MatchCell homeTeam={feedWinner('QF_L1')} awayTeam={feedWinner('QF_L2')} winner={getWinner('SF_L')} isPath={isPath('SF_L')} />
-            </div>
-          </div>
-
-          {/* FINAL */}
-          <div style={{ position: 'relative', width: ColW.final, height: CONTAINER_H, display: 'flex' }}>
-            <div style={{ position: 'absolute', top: sfTop() - 10, left: 0, right: 0, height: 60, display: 'flex' }}>
-              <FinalCell champion={champion} />
-            </div>
-          </div>
-
-          {/* RIGHT SF */}
-          <div style={{ position: 'relative', width: ColW.sf, height: CONTAINER_H, display: 'flex' }}>
-            <div style={{ position: 'absolute', top: sfTop(), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-              <MatchCell homeTeam={feedWinner('QF_R1')} awayTeam={feedWinner('QF_R2')} winner={getWinner('SF_R')} isPath={isPath('SF_R')} />
-            </div>
-          </div>
-
-          {/* RIGHT QF */}
-          <div style={{ position: 'relative', width: ColW.qf, height: CONTAINER_H, display: 'flex' }}>
-            {[0, 1].map(i => {
-              const matchId = `QF_R${i + 1}`
-              const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
-              return (
-                <div key={matchId} style={{ position: 'absolute', top: qfTop(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                  <MatchCell
-                    homeTeam={feedWinner(struct?.homeFeeder ?? '')}
-                    awayTeam={feedWinner(struct?.awayFeeder ?? '')}
-                    winner={getWinner(matchId)}
-                    isPath={isPath(matchId)}
-                  />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* RIGHT R16 */}
-          <div style={{ position: 'relative', width: ColW.r16, height: CONTAINER_H, display: 'flex' }}>
-            {[0, 1, 2, 3].map(i => {
-              const matchId = `R16_R${i + 1}`
-              const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
-              return (
-                <div key={matchId} style={{ position: 'absolute', top: r16Top(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                  <MatchCell
-                    homeTeam={feedWinner(struct?.homeFeeder ?? '')}
-                    awayTeam={feedWinner(struct?.awayFeeder ?? '')}
-                    winner={getWinner(matchId)}
-                    isPath={isPath(matchId)}
-                  />
-                </div>
-              )
-            })}
-          </div>
-
-          {/* RIGHT R32 */}
-          <div style={{ position: 'relative', width: ColW.r32, height: CONTAINER_H, display: 'flex' }}>
-            {rightR32.map(slot => (
-              <div key={slot.matchId} style={{ position: 'absolute', top: r32Top(slot.position), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
-                <MatchCell
-                  homeTeam={slot.homeSlot.length === 2 ? r32TeamFromGroup(slot.homeSlot) : null}
-                  awayTeam={slot.awaySlot.length === 2 ? r32TeamFromGroup(slot.awaySlot) : null}
-                  winner={getWinner(slot.matchId)}
-                  isPath={isPath(slot.matchId)}
-                />
-              </div>
-            ))}
-          </div>
-
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', background: DARK, padding: '18px 20px', borderRadius: 14, fontFamily: 'Inter' }}>
+      {/* Title */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+        <span style={{ color: GOLD, fontSize: 12, fontWeight: 700, letterSpacing: 4 }}>
+          FIFA WORLD CUP 2026 · MY BRACKET
+        </span>
       </div>
 
-      {/* DIVIDER */}
-      <div style={{ width: 1, background: '#1e2d50', margin: '0 12px', alignSelf: 'stretch', display: 'flex' }} />
+      {/* Bracket columns */}
+      <div style={{ display: 'flex', gap: GAP, alignItems: 'flex-start' }}>
 
-      {/* === GROUP PANEL === */}
-      <div style={{ width: 210, display: 'flex', flexDirection: 'column' }}>
-        {/* Panel title */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-          <span style={{ color: GOLD, fontSize: 8, fontWeight: 700, letterSpacing: 2 }}>GROUP STAGE</span>
+        {/* LEFT R32 */}
+        <div style={{ position: 'relative', width: ColW.r32, height: CONTAINER_H, display: 'flex' }}>
+          {leftR32.map(slot => (
+            <div key={slot.matchId} style={{ position: 'absolute', top: r32Top(slot.position), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
+              <MatchCell
+                homeTeam={r32HomeTeam(slot.homeSlot)}
+                awayTeam={r32AwayTeam(slot.awaySlot, slot.matchId)}
+                winner={getWinner(slot.matchId)}
+                isPath={isPath(slot.matchId)}
+              />
+            </div>
+          ))}
         </div>
 
-        {/* Two-column flex layout (Satori does not support display:grid) */}
-        <div style={{ display: 'flex', gap: 4, flex: 1 }}>
-          {/* Left column: A, C, E, G, I, K */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-            {leftGroups.map(g => <GroupCard key={g.id} id={g.id} teams={g.teams} />)}
-          </div>
-          {/* Right column: B, D, F, H, J, L */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-            {rightGroups.map(g => <GroupCard key={g.id} id={g.id} teams={g.teams} />)}
+        {/* LEFT R16 */}
+        <div style={{ position: 'relative', width: ColW.r16, height: CONTAINER_H, display: 'flex' }}>
+          {[0, 1, 2, 3].map(i => {
+            const matchId = `R16_L${i + 1}`
+            const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
+            return (
+              <div key={matchId} style={{ position: 'absolute', top: r16Top(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
+                <MatchCell
+                  homeTeam={getWinner(struct?.homeFeeder ?? '')}
+                  awayTeam={getWinner(struct?.awayFeeder ?? '')}
+                  winner={getWinner(matchId)}
+                  isPath={isPath(matchId)}
+                />
+              </div>
+            )
+          })}
+        </div>
+
+        {/* LEFT QF */}
+        <div style={{ position: 'relative', width: ColW.qf, height: CONTAINER_H, display: 'flex' }}>
+          {[0, 1].map(i => {
+            const matchId = `QF_L${i + 1}`
+            const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
+            return (
+              <div key={matchId} style={{ position: 'absolute', top: qfTop(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
+                <MatchCell
+                  homeTeam={getWinner(struct?.homeFeeder ?? '')}
+                  awayTeam={getWinner(struct?.awayFeeder ?? '')}
+                  winner={getWinner(matchId)}
+                  isPath={isPath(matchId)}
+                />
+              </div>
+            )
+          })}
+        </div>
+
+        {/* LEFT SF */}
+        <div style={{ position: 'relative', width: ColW.sf, height: CONTAINER_H, display: 'flex' }}>
+          <div style={{ position: 'absolute', top: sfTop(), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
+            <MatchCell homeTeam={getWinner('QF_L1')} awayTeam={getWinner('QF_L2')} winner={getWinner('SF_L')} isPath={isPath('SF_L')} />
           </div>
         </div>
+
+        {/* FINAL */}
+        <div style={{ position: 'relative', width: ColW.final, height: CONTAINER_H, display: 'flex' }}>
+          <div style={{ position: 'absolute', top: sfTop() - 12, left: 0, right: 0, height: 80, display: 'flex' }}>
+            <FinalCell champion={champion} />
+          </div>
+        </div>
+
+        {/* RIGHT SF */}
+        <div style={{ position: 'relative', width: ColW.sf, height: CONTAINER_H, display: 'flex' }}>
+          <div style={{ position: 'absolute', top: sfTop(), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
+            <MatchCell homeTeam={getWinner('QF_R1')} awayTeam={getWinner('QF_R2')} winner={getWinner('SF_R')} isPath={isPath('SF_R')} />
+          </div>
+        </div>
+
+        {/* RIGHT QF */}
+        <div style={{ position: 'relative', width: ColW.qf, height: CONTAINER_H, display: 'flex' }}>
+          {[0, 1].map(i => {
+            const matchId = `QF_R${i + 1}`
+            const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
+            return (
+              <div key={matchId} style={{ position: 'absolute', top: qfTop(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
+                <MatchCell
+                  homeTeam={getWinner(struct?.homeFeeder ?? '')}
+                  awayTeam={getWinner(struct?.awayFeeder ?? '')}
+                  winner={getWinner(matchId)}
+                  isPath={isPath(matchId)}
+                />
+              </div>
+            )
+          })}
+        </div>
+
+        {/* RIGHT R16 */}
+        <div style={{ position: 'relative', width: ColW.r16, height: CONTAINER_H, display: 'flex' }}>
+          {[0, 1, 2, 3].map(i => {
+            const matchId = `R16_R${i + 1}`
+            const struct = KNOCKOUT_STRUCTURE.find(s => s.matchId === matchId)
+            return (
+              <div key={matchId} style={{ position: 'absolute', top: r16Top(i), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
+                <MatchCell
+                  homeTeam={getWinner(struct?.homeFeeder ?? '')}
+                  awayTeam={getWinner(struct?.awayFeeder ?? '')}
+                  winner={getWinner(matchId)}
+                  isPath={isPath(matchId)}
+                />
+              </div>
+            )
+          })}
+        </div>
+
+        {/* RIGHT R32 */}
+        <div style={{ position: 'relative', width: ColW.r32, height: CONTAINER_H, display: 'flex' }}>
+          {rightR32.map(slot => (
+            <div key={slot.matchId} style={{ position: 'absolute', top: r32Top(slot.position), left: 0, right: 0, height: CARD_H, display: 'flex' }}>
+              <MatchCell
+                homeTeam={r32HomeTeam(slot.homeSlot)}
+                awayTeam={r32AwayTeam(slot.awaySlot, slot.matchId)}
+                winner={getWinner(slot.matchId)}
+                isPath={isPath(slot.matchId)}
+              />
+            </div>
+          ))}
+        </div>
+
       </div>
-
     </div>
   )
 }

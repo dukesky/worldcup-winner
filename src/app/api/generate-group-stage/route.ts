@@ -6,7 +6,7 @@ import { Resvg } from '@resvg/resvg-js'
 import { readFileSync } from 'fs'
 import path from 'path'
 import { createElement } from 'react'
-import { BracketImageTemplate } from '@/components/bracket-image/BracketImageTemplate'
+import { GroupStageImageTemplate } from '@/components/bracket-image/GroupStageImageTemplate'
 import type { BracketPicks } from '@/lib/picks'
 
 let fontData: ArrayBuffer | null = null
@@ -22,24 +22,23 @@ function getFont() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    if (!body || !Array.isArray(body.groups) || !Array.isArray(body.knockout)) {
+    if (!body || !Array.isArray(body.groups)) {
       return NextResponse.json({ error: 'Invalid picks payload' }, { status: 400 })
     }
     const picks = body as BracketPicks
 
     const svg = await satori(
-      createElement(BracketImageTemplate, { picks }),
+      createElement(GroupStageImageTemplate, { picks }),
       {
-        width: 1600,
-        height: 700,
+        width: 960,
+        height: 660,
         fonts: [{ name: 'Inter', data: getFont(), weight: 400 }],
       }
     )
 
-    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1600 } })
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 960 } })
     const rendered = resvg.render()
     const pngBuffer = rendered.asPng()
-    // Copy into a plain ArrayBuffer to satisfy strict BodyInit typings
     const arrayBuffer = pngBuffer.buffer.slice(
       pngBuffer.byteOffset,
       pngBuffer.byteOffset + pngBuffer.byteLength
@@ -48,11 +47,11 @@ export async function POST(req: NextRequest) {
     return new NextResponse(arrayBuffer, {
       headers: {
         'Content-Type': 'image/png',
-        'Content-Disposition': 'attachment; filename="wc2026-bracket.png"',
+        'Content-Disposition': 'attachment; filename="wc2026-groups.png"',
       },
     })
   } catch (err) {
-    console.error('Bracket generation error:', err)
-    return NextResponse.json({ error: 'Failed to generate bracket' }, { status: 500 })
+    console.error('Group stage generation error:', err)
+    return NextResponse.json({ error: 'Failed to generate group stage image' }, { status: 500 })
   }
 }

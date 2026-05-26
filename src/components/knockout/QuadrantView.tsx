@@ -43,10 +43,14 @@ function resolveMatchTeams(
   const r32 = r32Matchups.find(m => m.matchId === matchId)
   if (r32) {
     const resolvedAway = r32.awayTeam ?? wildcards[matchId] ?? null
+    const takenElsewhere = new Set(
+      Object.entries(wildcards).filter(([mid]) => mid !== matchId).map(([, tid]) => tid)
+    )
+    const filteredOptions = r32.awayOptions?.filter(tid => !takenElsewhere.has(tid))
     return {
       home: r32.homeTeam,
       away: resolvedAway,
-      awayOptions: !r32.awayTeam && !wildcards[matchId] ? r32.awayOptions : undefined,
+      awayOptions: !r32.awayTeam && !wildcards[matchId] ? filteredOptions : undefined,
     }
   }
   const entry = KNOCKOUT_STRUCTURE.find(e => e.matchId === matchId)

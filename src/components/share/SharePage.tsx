@@ -7,6 +7,7 @@ interface Props { lang: Language }
 
 export function SharePage({ lang }: Props) {
   const [bracketUrl, setBracketUrl] = useState<string | null>(null)
+  const [groupStageUrl, setGroupStageUrl] = useState<string | null>(null)
   const [celebrationUrl, setCelebrationUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -30,39 +31,34 @@ export function SharePage({ lang }: Props) {
 
     const champion = picks.knockout.find(m => m.matchId === 'FINAL')?.winner
 
+    const postJson = (url: string) =>
+      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(picks) })
+
     Promise.all([
-      // Generate bracket image
-      fetch('/api/generate-bracket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(picks),
-      })
-        .then(r => {
-          if (!r.ok) throw new Error(`Bracket API returned ${r.status}`)
-          return r.blob()
-        })
+      // Bracket image (bracket only)
+      postJson('/api/generate-bracket')
+        .then(r => { if (!r.ok) throw new Error(`Bracket API returned ${r.status}`); return r.blob() })
         .then(b => URL.createObjectURL(b)),
 
-      // Generate celebration image (only if champion known)
+      // Group stage image
+      postJson('/api/generate-group-stage')
+        .then(r => r.ok ? r.blob() : null)
+        .then(b => b ? URL.createObjectURL(b) : null),
+
+      // Celebration image (only if champion known)
       champion
         ? fetch('/api/generate-celebration', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              photo: picks.photoDataUrl,
-              championTeam: champion,
-              language: picks.language,
-            }),
+            body: JSON.stringify({ photo: picks.photoDataUrl, championTeam: champion, language: picks.language }),
           })
-            .then(r => {
-              if (!r.ok) return null // graceful fallback if celebration fails
-              return r.json()
-            })
+            .then(r => r.ok ? r.json() : null)
             .then(d => d?.imageUrl ?? null)
         : Promise.resolve(null),
     ])
-      .then(([bracket, celebration]) => {
+      .then(([bracket, groupStage, celebration]) => {
         setBracketUrl(bracket)
+        setGroupStageUrl(groupStage)
         setCelebrationUrl(celebration)
       })
       .catch(err => setError(err.message))
@@ -119,6 +115,19 @@ export function SharePage({ lang }: Props) {
               className="self-center bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black px-8 py-3 rounded-xl hover:scale-105 transition-transform"
             >
               {t(lang, 'downloadBracket')}
+            </button>
+          </div>
+        )}
+
+        {/* Group stage image */}
+        {groupStageUrl && (
+          <div className="flex flex-col gap-3">
+            <img src={groupStageUrl} alt="Group stage" className="w-full rounded-xl border border-[#1e2d50]" />
+            <button
+              onClick={() => download(groupStageUrl, 'wc2026-groups.png')}
+              className="self-center border border-[#ffd700] text-[#ffd700] font-black px-8 py-3 rounded-xl hover:bg-[#ffd700]/10 transition-colors"
+            >
+              {t(lang, 'downloadGroupStage')}
             </button>
           </div>
         )}
