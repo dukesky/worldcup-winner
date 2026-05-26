@@ -24,17 +24,19 @@ function getSFTeams(picks: KnockoutMatchPick[]): {
   sfRHome: TeamId|null; sfRAway: TeamId|null; sfRWinner: TeamId|null
   finalHome: TeamId|null; finalAway: TeamId|null; champion: TeamId|null
 } {
-  const sfL = KNOCKOUT_STRUCTURE.find(e => e.matchId === 'SF_L')!
-  const sfR = KNOCKOUT_STRUCTURE.find(e => e.matchId === 'SF_R')!
+  const sfL = KNOCKOUT_STRUCTURE.find(e => e.matchId === 'SF_L')
+  const sfR = KNOCKOUT_STRUCTURE.find(e => e.matchId === 'SF_R')
+  const sfLWinner = getWinner('SF_L', picks)
+  const sfRWinner = getWinner('SF_R', picks)
   return {
-    sfLHome: getWinner(sfL.homeFeeder, picks),
-    sfLAway: getWinner(sfL.awayFeeder, picks),
-    sfLWinner: getWinner('SF_L', picks),
-    sfRHome: getWinner(sfR.homeFeeder, picks),
-    sfRAway: getWinner(sfR.awayFeeder, picks),
-    sfRWinner: getWinner('SF_R', picks),
-    finalHome: getWinner('SF_L', picks),
-    finalAway: getWinner('SF_R', picks),
+    sfLHome: sfL ? getWinner(sfL.homeFeeder, picks) : null,
+    sfLAway: sfL ? getWinner(sfL.awayFeeder, picks) : null,
+    sfLWinner,
+    sfRHome: sfR ? getWinner(sfR.homeFeeder, picks) : null,
+    sfRAway: sfR ? getWinner(sfR.awayFeeder, picks) : null,
+    sfRWinner,
+    finalHome: sfLWinner,
+    finalAway: sfRWinner,
     champion: getWinner('FINAL', picks),
   }
 }
@@ -79,7 +81,7 @@ function PickCard({ matchId, label, homeId, awayId, winner, disabled, onPick }: 
             ) : (
               <span className="text-xs text-[#3a4a6a]">TBD</span>
             )}
-            {isWinner && <span className="ml-auto">✓</span>}
+            {isWinner && <span className="ml-auto" aria-hidden="true">✓</span>}
           </button>
         )
       })}
