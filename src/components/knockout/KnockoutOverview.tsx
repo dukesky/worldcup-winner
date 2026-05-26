@@ -1,5 +1,5 @@
 'use client'
-import { TEAMS, KNOCKOUT_STRUCTURE } from '@/data/wc2026'
+import { TEAMS } from '@/data/wc2026'
 import { t } from '@/lib/i18n'
 import type { Language, KnockoutMatchPick } from '@/lib/picks'
 import type { R32Matchup } from '@/lib/bracket'
@@ -43,7 +43,7 @@ export function KnockoutOverview({ r32Matchups, knockoutPicks, wildcardSelection
       </div>
 
       <p className="text-[#8a9bc0] text-sm text-center mb-6">
-        Tap a section to pick the winners
+        {t(lang, 'tapToPickWinners')}
       </p>
 
       <div className="grid grid-cols-2 gap-4 mb-6">

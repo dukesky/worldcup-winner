@@ -174,7 +174,7 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
 
       {quadrantComplete && qfWinner && (
         <div className="bg-[#1a2e0a] border border-[#ffd700] rounded-xl p-3 mb-4 text-center">
-          <div className="text-[#ffd700] text-xs font-bold mb-1">Section Winner</div>
+          <div className="text-[#ffd700] text-xs font-bold mb-1">{t(lang, 'sectionWinner')}</div>
           <div className="flex items-center justify-center gap-2">
             <span className="text-2xl">{qfWinner.flag}</span>
             <span className="text-white font-bold">{qfWinner.name}</span>

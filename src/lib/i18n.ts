@@ -46,6 +46,8 @@ export const TRANSLATIONS = {
     finalFour: 'Final Four',
     semifinal: 'Semifinal',
     pickWildCard: 'Pick 3rd-place team',
+    tapToPickWinners: 'Tap a section to pick the winners',
+    sectionWinner: 'Section Winner',
   },
   cn: {
     appTitle: 'FIFA 2026世界杯',
@@ -92,6 +94,8 @@ export const TRANSLATIONS = {
     finalFour: '最后四强',
     semifinal: '半决赛',
     pickWildCard: '选择第三名球队',
+    tapToPickWinners: '点击区域选择胜者',
+    sectionWinner: '本区冠军',
   },
   es: {
     appTitle: 'Copa del Mundo FIFA 2026',
@@ -138,6 +142,8 @@ export const TRANSLATIONS = {
     finalFour: 'Final Four',
     semifinal: 'Semifinal',
     pickWildCard: 'Elige el equipo 3°',
+    tapToPickWinners: 'Toca una sección para elegir ganadores',
+    sectionWinner: 'Ganador de Sección',
   },
 } satisfies Record<Language, Record<string, unknown>>
 
