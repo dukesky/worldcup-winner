@@ -17,6 +17,7 @@ type KnockoutView = 'overview' | QuadrantId
 export default function PredictPage() {
   const [step, setStep] = useState<Step>('groups')
   const [knockoutView, setKnockoutView] = useState<KnockoutView>('overview')
+  const [currentGroupIdx, setCurrentGroupIdx] = useState(0)
   const { lang } = useLanguage()
   const router = useRouter()
   const {
@@ -36,6 +37,8 @@ export default function PredictPage() {
       <GroupStagePicker
         picks={groups}
         lang={lang}
+        currentGroupIdx={currentGroupIdx}
+        onGroupIdxChange={setCurrentGroupIdx}
         onRankingChange={setGroupRanking}
         onScoreChange={setGroupScore}
         onComplete={() => { setStep('knockout'); setKnockoutView('overview') }}

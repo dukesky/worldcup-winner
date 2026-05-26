@@ -8,32 +8,25 @@ const basePicks = GROUPS.map(g => ({
   scores: {},
 }))
 
+const defaultProps = {
+  picks: basePicks,
+  lang: 'en' as const,
+  currentGroupIdx: 0,
+  onGroupIdxChange: () => {},
+  onRankingChange: () => {},
+  onScoreChange: () => {},
+  onComplete: () => {},
+  onBack: () => {},
+}
+
 test('calls onBack when back-to-home button is clicked', () => {
   const onBack = vi.fn()
-  render(
-    <GroupStagePicker
-      picks={basePicks}
-      lang="en"
-      onRankingChange={() => {}}
-      onScoreChange={() => {}}
-      onComplete={() => {}}
-      onBack={onBack}
-    />
-  )
+  render(<GroupStagePicker {...defaultProps} onBack={onBack} />)
   fireEvent.click(screen.getByText('Home'))
   expect(onBack).toHaveBeenCalledTimes(1)
 })
 
 test('shows fixture venue for group A', () => {
-  render(
-    <GroupStagePicker
-      picks={basePicks}
-      lang="en"
-      onRankingChange={() => {}}
-      onScoreChange={() => {}}
-      onComplete={() => {}}
-      onBack={() => {}}
-    />
-  )
+  render(<GroupStagePicker {...defaultProps} />)
   expect(screen.getAllByText(/Rose Bowl/).length).toBeGreaterThan(0)
 })

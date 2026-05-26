@@ -1,6 +1,6 @@
 'use client'
 import { TEAMS } from '@/data/wc2026'
-import { t } from '@/lib/i18n'
+import { t, getTeamName } from '@/lib/i18n'
 import type { Language, KnockoutMatchPick } from '@/lib/picks'
 import type { R32Matchup } from '@/lib/bracket'
 
@@ -82,7 +82,7 @@ export function KnockoutOverview({ r32Matchups, knockoutPicks, wildcardSelection
               {complete && qfWinner ? (
                 <div className="flex items-center gap-1 mt-1">
                   <span className="text-xl">{qfWinner.flag}</span>
-                  <span className="text-white text-xs font-semibold">{qfWinner.name}</span>
+                  <span className="text-white text-xs font-semibold">{getTeamName(qfWinner, lang)}</span>
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-1 mt-1">

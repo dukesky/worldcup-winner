@@ -1,7 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import { TEAMS, KNOCKOUT_STRUCTURE } from '@/data/wc2026'
-import { t } from '@/lib/i18n'
+import { t, getTeamName } from '@/lib/i18n'
 import type { Language, KnockoutMatchPick, TeamId } from '@/lib/picks'
 import type { R32Matchup } from '@/lib/bracket'
 
@@ -48,10 +48,11 @@ interface PickCardProps {
   awayId: TeamId | null
   winner: TeamId | null
   disabled: boolean
+  lang: Language
   onPick: (matchId: string, w: TeamId) => void
 }
 
-function PickCard({ matchId, label, homeId, awayId, winner, disabled, onPick }: PickCardProps) {
+function PickCard({ matchId, label, homeId, awayId, winner, disabled, lang, onPick }: PickCardProps) {
   return (
     <div className={`rounded-xl border p-3 transition-all ${
       disabled ? 'opacity-40' : winner ? 'border-[#ffd700]/50 bg-[#0c1526]' : 'border-[#1a2847] bg-[#0c1526]'
@@ -76,7 +77,7 @@ function PickCard({ matchId, label, homeId, awayId, winner, disabled, onPick }: 
             {team ? (
               <>
                 <span className="text-lg leading-none">{team.flag}</span>
-                <span className="text-sm">{team.name}</span>
+                <span className="text-sm">{getTeamName(team, lang)}</span>
               </>
             ) : (
               <span className="text-xs text-[#3a4a6a]">TBD</span>
@@ -118,6 +119,7 @@ export function FinalFourView({ knockoutPicks, wildcardSelections: _wc, r32Match
           awayId={sfLAway}
           winner={sfLWinner}
           disabled={!sfLHome || !sfLAway}
+          lang={lang}
           onPick={onWinnerSelect}
         />
         <PickCard
@@ -127,6 +129,7 @@ export function FinalFourView({ knockoutPicks, wildcardSelections: _wc, r32Match
           awayId={sfRAway}
           winner={sfRWinner}
           disabled={!sfRHome || !sfRAway}
+          lang={lang}
           onPick={onWinnerSelect}
         />
       </div>
@@ -139,6 +142,7 @@ export function FinalFourView({ knockoutPicks, wildcardSelections: _wc, r32Match
         awayId={finalAway}
         winner={champion}
         disabled={!finalHome || !finalAway}
+        lang={lang}
         onPick={onWinnerSelect}
       />
 
@@ -147,7 +151,7 @@ export function FinalFourView({ knockoutPicks, wildcardSelections: _wc, r32Match
         <div className="mt-6 text-center">
           <div className="text-[#ffd700] text-sm font-bold mb-2">{t(lang, 'champion')}</div>
           <div className="text-6xl mb-2">{championTeam.flag}</div>
-          <div className="text-white font-black text-2xl">{championTeam.name}</div>
+          <div className="text-white font-black text-2xl">{getTeamName(championTeam, lang)}</div>
         </div>
       )}
     </div>

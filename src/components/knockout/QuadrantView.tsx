@@ -1,6 +1,7 @@
 'use client'
+import { useState } from 'react'
 import { TEAMS, KNOCKOUT_STRUCTURE } from '@/data/wc2026'
-import { t } from '@/lib/i18n'
+import { t, getTeamName } from '@/lib/i18n'
 import type { Language, KnockoutMatchPick, TeamId } from '@/lib/picks'
 import type { R32Matchup } from '@/lib/bracket'
 
@@ -27,6 +28,10 @@ interface Props {
 
 function getWinner(matchId: string, picks: KnockoutMatchPick[]): TeamId | null {
   return picks.find(p => p.matchId === matchId)?.winner ?? null
+}
+
+function getScore(matchId: string, picks: KnockoutMatchPick[]): { home: number | null; away: number | null } {
+  return picks.find(p => p.matchId === matchId)?.score ?? { home: null, away: null }
 }
 
 function resolveMatchTeams(
@@ -58,15 +63,29 @@ interface MatchBlockProps {
   awayId: TeamId | null
   awayOptions?: TeamId[]
   winner: TeamId | null
+  score: { home: number | null; away: number | null }
   lang: Language
   disabled: boolean
   onWinnerSelect: (matchId: string, w: TeamId) => void
+  onScoreChange: (matchId: string, home: number | null, away: number | null) => void
   onWildcardSelect: (matchId: string, w: TeamId) => void
 }
 
-function MatchBlock({ matchId, homeId, awayId, awayOptions, winner, lang, disabled, onWinnerSelect, onWildcardSelect }: MatchBlockProps) {
+function MatchBlock({ matchId, homeId, awayId, awayOptions, winner, score, lang, disabled, onWinnerSelect, onScoreChange, onWildcardSelect }: MatchBlockProps) {
+  const [hs, setHs] = useState<string>(score.home !== null ? String(score.home) : '')
+  const [as_, setAs] = useState<string>(score.away !== null ? String(score.away) : '')
   const home = homeId ? TEAMS[homeId] : null
   const away = awayId ? TEAMS[awayId] : null
+  const bothReady = !!homeId && !!awayId
+
+  function applyScore(newHs: string, newAs: string) {
+    const h = newHs !== '' ? parseInt(newHs) : null
+    const a = newAs !== '' ? parseInt(newAs) : null
+    onScoreChange(matchId, h, a)
+    if (h !== null && a !== null && h !== a && homeId && awayId) {
+      onWinnerSelect(matchId, h > a ? homeId : awayId)
+    }
+  }
 
   return (
     <div className={`rounded-lg border p-2 bg-[#0c1526] transition-all ${
@@ -87,7 +106,7 @@ function MatchBlock({ matchId, homeId, awayId, awayOptions, winner, lang, disabl
                   className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-[#1a2847] text-[9px] hover:border-[#ffd700] transition-colors"
                 >
                   <span>{team?.flag}</span>
-                  <span className="text-[#8a9bc0]">{team?.name}</span>
+                  <span className="text-[#8a9bc0]">{team ? getTeamName(team, lang) : tid}</span>
                 </button>
               )
             })}
@@ -95,41 +114,92 @@ function MatchBlock({ matchId, homeId, awayId, awayOptions, winner, lang, disabl
         </div>
       )}
 
-      {[{ team: home, id: homeId }, { team: away, id: awayId }].map(({ team, id }, i) => (
-        <button
-          key={i}
-          disabled={disabled || !id || (!home && i === 0) || (!away && !awayOptions && i === 1)}
-          onClick={() => id && !disabled && onWinnerSelect(matchId, id)}
-          className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded transition-all mb-0.5 ${
-            winner === id && id
-              ? 'bg-[#1a2e0a] border border-[#ffd700] text-[#ffd700] font-bold'
-              : id
-              ? 'hover:bg-[#111b35] text-[#7a8fb0] hover:text-white'
-              : 'opacity-30 cursor-default'
-          }`}
-        >
-          {team ? (
-            <>
-              <span className="text-sm leading-none">{team.flag}</span>
-              <span className="text-[10px]">{team.name}</span>
-            </>
-          ) : (
-            <span className="text-[9px] text-[#3a4a6a]">TBD</span>
-          )}
-          {winner === id && id && <span className="ml-auto text-[9px]">✓</span>}
-        </button>
-      ))}
+      {/* Home team */}
+      <button
+        disabled={disabled || !bothReady}
+        onClick={() => homeId && bothReady && !disabled && onWinnerSelect(matchId, homeId)}
+        className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded transition-all ${
+          winner === homeId && homeId
+            ? 'bg-[#1a2e0a] border border-[#ffd700] text-[#ffd700] font-bold'
+            : homeId
+            ? 'hover:bg-[#111b35] text-[#7a8fb0] hover:text-white'
+            : 'opacity-30 cursor-default'
+        }`}
+      >
+        {home ? (
+          <>
+            <span className="text-sm leading-none">{home.flag}</span>
+            <span className="text-[10px]">{getTeamName(home, lang)}</span>
+            {winner === homeId && <span className="ml-auto text-[9px]" aria-hidden="true">✓</span>}
+          </>
+        ) : (
+          <span className="text-[9px] text-[#3a4a6a]">TBD</span>
+        )}
+      </button>
+
+      {/* Center row: score inputs with winner arrow between the two teams */}
+      {bothReady && !disabled ? (
+        <div className="flex items-center justify-center gap-1 py-1">
+          <input
+            type="number"
+            min="0"
+            max="20"
+            value={hs}
+            onChange={e => { setHs(e.target.value); applyScore(e.target.value, as_) }}
+            placeholder="–"
+            className="w-8 h-5 text-center text-[10px] bg-[#111b35] border border-[#2a3a5a] rounded text-white focus:border-[#ffd700] focus:outline-none [appearance:textfield]"
+          />
+          <span className={`text-[10px] px-1 font-bold ${winner ? 'text-[#ffd700]' : 'text-[#3a4a6a]'}`}>
+            {winner === homeId ? '▲' : winner === awayId ? '▼' : ':'}
+          </span>
+          <input
+            type="number"
+            min="0"
+            max="20"
+            value={as_}
+            onChange={e => { setAs(e.target.value); applyScore(hs, e.target.value) }}
+            placeholder="–"
+            className="w-8 h-5 text-center text-[10px] bg-[#111b35] border border-[#2a3a5a] rounded text-white focus:border-[#ffd700] focus:outline-none [appearance:textfield]"
+          />
+        </div>
+      ) : (
+        <div className="h-2" />
+      )}
+
+      {/* Away team */}
+      <button
+        disabled={disabled || !awayId || !bothReady}
+        onClick={() => awayId && bothReady && !disabled && onWinnerSelect(matchId, awayId)}
+        className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded transition-all ${
+          winner === awayId && awayId
+            ? 'bg-[#1a2e0a] border border-[#ffd700] text-[#ffd700] font-bold'
+            : awayId
+            ? 'hover:bg-[#111b35] text-[#7a8fb0] hover:text-white'
+            : 'opacity-30 cursor-default'
+        }`}
+      >
+        {away ? (
+          <>
+            <span className="text-sm leading-none">{away.flag}</span>
+            <span className="text-[10px]">{getTeamName(away, lang)}</span>
+            {winner === awayId && <span className="ml-auto text-[9px]" aria-hidden="true">✓</span>}
+          </>
+        ) : (
+          <span className="text-[9px] text-[#3a4a6a]">TBD</span>
+        )}
+      </button>
     </div>
   )
 }
 
-export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSelections, lang, onWinnerSelect, onScoreChange: _onScoreChange, onWildcardSelect, onBack }: Props) {
+export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSelections, lang, onWinnerSelect, onScoreChange, onWildcardSelect, onBack }: Props) {
   const qDef = QUADRANT_MATCHES[quadrant]
 
   const r32Data = qDef.r32.map(id => ({
     matchId: id,
     ...resolveMatchTeams(id, r32Matchups, knockoutPicks, wildcardSelections),
     winner: getWinner(id, knockoutPicks),
+    score: getScore(id, knockoutPicks),
   }))
 
   const r16Data = qDef.r16.map((id, i) => {
@@ -139,6 +209,7 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
       matchId: id,
       ...resolveMatchTeams(id, r32Matchups, knockoutPicks, wildcardSelections),
       winner: getWinner(id, knockoutPicks),
+      score: getScore(id, knockoutPicks),
       disabled: !bothFeedersDone,
     }
   })
@@ -148,6 +219,7 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
     matchId: qDef.qf,
     ...resolveMatchTeams(qDef.qf, r32Matchups, knockoutPicks, wildcardSelections),
     winner: getWinner(qDef.qf, knockoutPicks),
+    score: getScore(qDef.qf, knockoutPicks),
     disabled: !qfDone,
   }
 
@@ -177,7 +249,7 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
           <div className="text-[#ffd700] text-xs font-bold mb-1">{t(lang, 'sectionWinner')}</div>
           <div className="flex items-center justify-center gap-2">
             <span className="text-2xl">{qfWinner.flag}</span>
-            <span className="text-white font-bold">{qfWinner.name}</span>
+            <span className="text-white font-bold">{getTeamName(qfWinner, lang)}</span>
           </div>
         </div>
       )}
@@ -196,9 +268,11 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
                   awayId={m.away}
                   awayOptions={m.awayOptions}
                   winner={m.winner}
+                  score={m.score}
                   lang={lang}
                   disabled={false}
                   onWinnerSelect={onWinnerSelect}
+                  onScoreChange={onScoreChange}
                   onWildcardSelect={onWildcardSelect}
                 />
               ))}
@@ -216,9 +290,11 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
                   homeId={m.home}
                   awayId={m.away}
                   winner={m.winner}
+                  score={m.score}
                   lang={lang}
                   disabled={m.disabled}
                   onWinnerSelect={onWinnerSelect}
+                  onScoreChange={onScoreChange}
                   onWildcardSelect={onWildcardSelect}
                 />
               ))}
@@ -234,9 +310,11 @@ export function QuadrantView({ quadrant, r32Matchups, knockoutPicks, wildcardSel
                 homeId={qfData.home}
                 awayId={qfData.away}
                 winner={qfData.winner}
+                score={qfData.score}
                 lang={lang}
                 disabled={qfData.disabled}
                 onWinnerSelect={onWinnerSelect}
+                onScoreChange={onScoreChange}
                 onWildcardSelect={onWildcardSelect}
               />
             </div>

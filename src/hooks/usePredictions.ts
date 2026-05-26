@@ -12,14 +12,23 @@ function initialGroups(): GroupPick[] {
   }))
 }
 
+const R32_IDS = [
+  'R32_L1','R32_L2','R32_L3','R32_L4','R32_L5','R32_L6','R32_L7','R32_L8',
+  'R32_R1','R32_R2','R32_R3','R32_R4','R32_R5','R32_R6','R32_R7','R32_R8',
+]
+
 function initialKnockout(): KnockoutMatchPick[] {
-  return KNOCKOUT_STRUCTURE.map(m => ({
-    matchId: m.matchId,
-    homeSlot: m.homeFeeder,
-    awaySlot: m.awayFeeder,
-    winner: null,
-    score: { home: null, away: null },
-  }))
+  return [
+    ...R32_IDS.map(matchId => ({
+      matchId, homeSlot: '', awaySlot: '', winner: null as TeamId | null,
+      score: { home: null as number | null, away: null as number | null },
+    })),
+    ...KNOCKOUT_STRUCTURE.map(m => ({
+      matchId: m.matchId, homeSlot: m.homeFeeder, awaySlot: m.awayFeeder,
+      winner: null as TeamId | null,
+      score: { home: null as number | null, away: null as number | null },
+    })),
+  ]
 }
 
 export function usePredictions() {

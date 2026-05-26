@@ -1,4 +1,10 @@
-import type { Language } from '@/lib/picks'
+import type { Language, Team } from '@/lib/picks'
+
+export function getTeamName(team: Team, lang: Language): string {
+  if (lang === 'cn') return team.nameZh
+  if (lang === 'es') return team.nameEs
+  return team.name
+}
 
 export const TRANSLATIONS = {
   en: {
