@@ -150,7 +150,8 @@ export function SharePage({ lang }: Props) {
   async function handleNativeShare() {
     if (!celebrationUrl && !bracketUrl) return
 
-    // Bracket on top (full width) + celebration centered below = single portrait image.
+    // Celebration image overlaid INSIDE the bracket, centered below the FINAL cell.
+    // Canvas stays at bracket dimensions — no extra height added.
     // Single image required because WeChat Moments rejects multi-image shares.
     async function buildCombinedImage(): Promise<string | null> {
       const loadImg = (src: string) => new Promise<HTMLImageElement>((res, rej) => {
@@ -168,48 +169,49 @@ export function SharePage({ lang }: Props) {
         celebrationUrl ? loadImg(celebrationUrl) : Promise.resolve(null),
       ])
 
-      const W = bracketImg ? bracketImg.naturalWidth : 1200
-      const bracketH = bracketImg ? bracketImg.naturalHeight : 0
-      const FOOTER = 80
-
-      // Celebration: max 35% of bracket width, centered below the Final cell (dead center)
-      const MAX_CELEB_W = Math.round(W * 0.35)
-      let celebW = 0
-      let celebH = 0
-      const CELEB_GAP = bracketImg && celebrationImg ? 40 : 0
-      if (celebrationImg) {
-        celebW = Math.min(MAX_CELEB_W, celebrationImg.naturalWidth)
-        celebH = Math.round(celebW * celebrationImg.naturalHeight / celebrationImg.naturalWidth)
+      // No bracket — return celebration alone
+      if (!bracketImg) {
+        if (!celebrationImg) return null
+        const c = document.createElement('canvas')
+        c.width = celebrationImg.naturalWidth
+        c.height = celebrationImg.naturalHeight
+        c.getContext('2d')!.drawImage(celebrationImg, 0, 0)
+        return c.toDataURL('image/jpeg', 0.88)
       }
 
-      const totalH = bracketH + CELEB_GAP + celebH + FOOTER
+      const W = bracketImg.naturalWidth   // 3200
+      const BH = bracketImg.naturalHeight // 1440
 
       const canvas = document.createElement('canvas')
       canvas.width = W
-      canvas.height = totalH
+      canvas.height = BH
       const ctx = canvas.getContext('2d')!
 
-      // Light background to match the bracket template
-      ctx.fillStyle = '#f4f6f9'
-      ctx.fillRect(0, 0, W, totalH)
+      // Draw bracket as base layer
+      ctx.drawImage(bracketImg, 0, 0, W, BH)
 
-      if (bracketImg) ctx.drawImage(bracketImg, 0, 0, W, bracketH)
-
-      if (celebrationImg && celebW > 0) {
-        const cx = Math.round((W - celebW) / 2)
-        ctx.drawImage(celebrationImg, cx, bracketH + CELEB_GAP, celebW, celebH)
+      if (celebrationImg) {
+        // FINAL cell bottom is ~58.3% down the bracket height (calc from template layout)
+        // overhead ≈ 115px, FINAL content-bottom ≈ 724px → canvas y ≈ 839
+        const FINAL_BOTTOM_Y = Math.round(BH * 0.583)  // ~839
+        const celebStartY = FINAL_BOTTOM_Y + 20
+        const availH = BH - celebStartY - 30            // ~531px
+        const maxW = Math.round(W * 0.225)              // ~720px
+        const scale = Math.min(maxW / celebrationImg.naturalWidth, availH / celebrationImg.naturalHeight, 1)
+        const cW = Math.round(celebrationImg.naturalWidth * scale)
+        const cH = Math.round(celebrationImg.naturalHeight * scale)
+        ctx.drawImage(celebrationImg, Math.round((W - cW) / 2), celebStartY, cW, cH)
       }
 
-      const footerY = bracketH + CELEB_GAP + celebH
-      ctx.fillStyle = '#e8ecf2'
-      ctx.fillRect(0, footerY, W, FOOTER)
-      ctx.fillStyle = '#c8960a50'
-      ctx.fillRect(0, footerY, W, 1)
+      // URL footer overlaid at bottom with semi-transparent light bar
+      const FOOTER_H = 56
+      ctx.fillStyle = 'rgba(244,246,249,0.92)'
+      ctx.fillRect(0, BH - FOOTER_H, W, FOOTER_H)
       ctx.fillStyle = '#c8960a'
-      ctx.font = `bold ${Math.round(FOOTER * 0.45)}px system-ui, -apple-system, sans-serif`
+      ctx.font = `bold ${Math.round(FOOTER_H * 0.43)}px system-ui,-apple-system,sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText('worldcup-winner.vercel.app  ·  #FIFAWorldCup2026', W / 2, footerY + FOOTER / 2)
+      ctx.fillText('worldcup-winner.vercel.app  ·  #FIFAWorldCup2026', W / 2, BH - FOOTER_H / 2)
 
       return canvas.toDataURL('image/jpeg', 0.88)
     }
