@@ -1,12 +1,12 @@
 import { TEAMS, KNOCKOUT_STRUCTURE, R32_SLOTS } from '@/data/wc2026'
 import type { BracketPicks, TeamId, Language } from '@/lib/picks'
 
-const GOLD = '#ffd700'
-const DARK = '#060b18'
-const DIM_BORDER = '#1a2847'
-const WIN_BG = '#152206'
-const LOSE_BG = '#070c18'
-const PATH_BORDER = '#ffd700'
+const GOLD = '#c8960a'       // dark gold — readable on light bg
+const DARK = '#f4f6f9'       // light background
+const DIM_BORDER = '#ccd5e0' // light card border
+const WIN_BG = '#e4f5e4'     // light green (winner row)
+const LOSE_BG = '#eeeeee'    // light gray (loser row)
+const PATH_BORDER = '#c8960a'
 
 // 2× resolution — all pixel values doubled so the PNG renders crisp at high DPI
 const CARD_H = 140
@@ -50,8 +50,8 @@ interface TeamRowProps {
 }
 
 function TeamRow({ tid, isWinner, isLoser, score, isBottom, lang, flagImages }: TeamRowProps) {
-  const bg = isWinner ? WIN_BG : isLoser ? LOSE_BG : '#0c1526'
-  const textColor = isWinner ? '#ffffff' : isLoser ? '#3a4a6a' : '#7a8fb0'
+  const bg = isWinner ? WIN_BG : isLoser ? LOSE_BG : '#edf1f8'
+  const textColor = isWinner ? '#1a5c0a' : isLoser ? '#a0a8b8' : '#2a3a54'
   const fw = isWinner ? 700 : 400
   const flagSrc = tid ? (flagImages[tid] ?? '') : ''
 
@@ -67,7 +67,7 @@ function TeamRow({ tid, isWinner, isLoser, score, isBottom, lang, flagImages }: 
     }}>
       {flagSrc
         ? <img src={flagSrc} width={56} height={38} style={{ borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />
-        : <div style={{ width: 56, height: 38, background: '#1a2847', borderRadius: 4, flexShrink: 0 }} />
+        : <div style={{ width: 56, height: 38, background: '#dde3ee', borderRadius: 4, flexShrink: 0 }} />
       }
       <div style={{ fontSize: 26, fontWeight: fw, color: textColor, flex: 1, display: 'flex', alignItems: 'center' }}>
         {getName(tid, lang)}
@@ -75,7 +75,7 @@ function TeamRow({ tid, isWinner, isLoser, score, isBottom, lang, flagImages }: 
       {score !== null && (
         <div style={{
           fontSize: 28, fontWeight: 700, display: 'flex',
-          color: isWinner ? GOLD : '#3a4a6a',
+          color: isWinner ? GOLD : '#b0b8c8',
           minWidth: 36, justifyContent: 'flex-end',
         }}>
           {score}
@@ -133,8 +133,8 @@ function FinalCell({ champion, lang, flagImages }: { champion: TeamId | null; la
   const name = getName(champion, lang)
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #1a3a0a 0%, #0f2606 100%)',
-      border: `4px solid ${GOLD}`,
+      background: 'linear-gradient(135deg, #e4fce0 0%, #cef5c8 100%)',
+      border: `4px solid ${PATH_BORDER}`,
       borderRadius: 24,
       height: 200,
       width: '100%',
@@ -143,15 +143,15 @@ function FinalCell({ champion, lang, flagImages }: { champion: TeamId | null; la
       alignItems: 'center',
       justifyContent: 'center',
       gap: 10,
-      boxShadow: `0 0 40px ${GOLD}40`,
+      boxShadow: `0 0 40px ${PATH_BORDER}30`,
     }}>
       <span style={{ color: GOLD, fontSize: 18, fontWeight: 700, letterSpacing: 6, display: 'flex' }}>FINAL</span>
       {flagSrc
         ? <img src={flagSrc} width={104} height={70} style={{ borderRadius: 8, objectFit: 'cover' }} />
-        : <div style={{ width: 104, height: 70, background: '#1a2847', borderRadius: 8 }} />
+        : <div style={{ width: 104, height: 70, background: '#dde3ee', borderRadius: 8 }} />
       }
-      <span style={{ color: '#ffffff', fontSize: 28, fontWeight: 800, display: 'flex' }}>{name}</span>
-      <span style={{ color: '#4caf50', fontSize: 18, fontWeight: 700, letterSpacing: 4, display: 'flex' }}>CHAMPION</span>
+      <span style={{ color: '#1a4a08', fontSize: 28, fontWeight: 800, display: 'flex' }}>{name}</span>
+      <span style={{ color: '#2e7d32', fontSize: 18, fontWeight: 700, letterSpacing: 4, display: 'flex' }}>CHAMPION</span>
     </div>
   )
 }

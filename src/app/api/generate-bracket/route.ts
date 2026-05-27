@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       createElement(BracketImageTemplate, { picks: imagePicks, flagImages }),
       {
         width: 3200,
-        height: 1400,
+        height: 1440,
         fonts: makeSatoriFonts(fonts),
       }
     )

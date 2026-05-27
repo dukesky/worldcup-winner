@@ -172,8 +172,8 @@ export function SharePage({ lang }: Props) {
       const bracketH = bracketImg ? bracketImg.naturalHeight : 0
       const FOOTER = 80
 
-      // Celebration: scale to fit, centered, max 55% of canvas width
-      const MAX_CELEB_W = Math.round(W * 0.55)
+      // Celebration: max 35% of bracket width, centered below the Final cell (dead center)
+      const MAX_CELEB_W = Math.round(W * 0.35)
       let celebW = 0
       let celebH = 0
       const CELEB_GAP = bracketImg && celebrationImg ? 40 : 0
@@ -189,7 +189,8 @@ export function SharePage({ lang }: Props) {
       canvas.height = totalH
       const ctx = canvas.getContext('2d')!
 
-      ctx.fillStyle = '#060b18'
+      // Light background to match the bracket template
+      ctx.fillStyle = '#f4f6f9'
       ctx.fillRect(0, 0, W, totalH)
 
       if (bracketImg) ctx.drawImage(bracketImg, 0, 0, W, bracketH)
@@ -200,11 +201,11 @@ export function SharePage({ lang }: Props) {
       }
 
       const footerY = bracketH + CELEB_GAP + celebH
-      ctx.fillStyle = '#0c1526'
+      ctx.fillStyle = '#e8ecf2'
       ctx.fillRect(0, footerY, W, FOOTER)
-      ctx.fillStyle = '#ffd70050'
+      ctx.fillStyle = '#c8960a50'
       ctx.fillRect(0, footerY, W, 1)
-      ctx.fillStyle = '#ffd700'
+      ctx.fillStyle = '#c8960a'
       ctx.font = `bold ${Math.round(FOOTER * 0.45)}px system-ui, -apple-system, sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
