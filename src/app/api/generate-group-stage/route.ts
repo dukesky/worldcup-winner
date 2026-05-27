@@ -26,13 +26,13 @@ export async function POST(req: NextRequest) {
     const svg = await satori(
       createElement(GroupStageImageTemplate, { picks, flagImages }),
       {
-        width: 1200,
-        height: 920,
+        width: 750,
+        height: 1050,
         fonts: makeSatoriFonts(fonts),
       }
     )
 
-    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } })
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 750 } })
     const rendered = resvg.render()
     const pngBuffer = rendered.asPng()
     const arrayBuffer = pngBuffer.buffer.slice(
