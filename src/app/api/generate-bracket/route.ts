@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid picks payload' }, { status: 400 })
     }
     const picks = body as BracketPicks
-    // Force English: Inter font has no CJK glyphs, so non-Latin names render as boxes
-    const imagePicks = { ...picks, language: 'en' as const }
+    // Inter has no CJK glyphs — Chinese names render as boxes, so force English for 'cn'
+    const imagePicks = picks.language === 'cn' ? { ...picks, language: 'en' as const } : picks
 
     const [flagImages, fonts] = await Promise.all([
       fetchFlagImages(Object.keys(TEAMS)),
