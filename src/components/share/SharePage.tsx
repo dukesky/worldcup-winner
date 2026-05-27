@@ -147,34 +147,51 @@ export function SharePage({ lang }: Props) {
   }
 
   async function handleNativeShare() {
-    const shareImage = celebrationUrl ?? bracketUrl
-    if (!shareImage) return
-    try {
-      let file: File | undefined
-      if (shareImage.startsWith('data:')) {
-        const [meta, b64] = shareImage.split(',')
+    if (!celebrationUrl && !bracketUrl) return
+
+    async function urlToFile(url: string, filename: string): Promise<File> {
+      if (url.startsWith('data:')) {
+        const [meta, b64] = url.split(',')
         const mime = meta.match(/:(.*?);/)?.[1] ?? 'image/png'
         const bytes = atob(b64)
         const arr = new Uint8Array(bytes.length)
         for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i)
-        file = new File([arr], 'wc2026-celebration.png', { type: mime })
-      } else {
-        const blob = await fetch(shareImage).then(r => r.blob())
-        file = new File([blob], 'wc2026-bracket.png', { type: blob.type })
+        return new File([arr], filename, { type: mime })
       }
-      const shareData: ShareData = { title: 'FIFA World Cup 2026 Prediction', text: caption, files: [file] }
-      if (navigator.canShare?.(shareData)) {
-        await navigator.share(shareData)
+      const blob = await fetch(url).then(r => r.blob())
+      return new File([blob], filename, { type: blob.type })
+    }
+
+    try {
+      // Build file list: celebration first (hero image), bracket second
+      const files: File[] = []
+      if (celebrationUrl) files.push(await urlToFile(celebrationUrl, 'wc2026-celebration.png'))
+      if (bracketUrl) files.push(await urlToFile(bracketUrl, 'wc2026-bracket.png'))
+
+      const baseData = { title: 'FIFA World Cup 2026 Prediction', text: caption }
+
+      // Try sharing both images together
+      const bothData: ShareData = { ...baseData, files }
+      if (navigator.canShare?.(bothData)) {
+        await navigator.share(bothData)
         return
       }
-      // Fallback: share text + url only (no file)
+
+      // Some devices support only 1 file — fall back to celebration image only
+      if (files.length > 0 && navigator.canShare?.({ ...baseData, files: [files[0]] })) {
+        await navigator.share({ ...baseData, files: [files[0]] })
+        return
+      }
+
+      // Text-only fallback
       if (navigator.share) {
-        await navigator.share({ title: 'FIFA World Cup 2026 Prediction', text: caption })
+        await navigator.share(baseData)
         return
       }
     } catch (e) {
       if ((e as Error).name === 'AbortError') return
     }
+
     // Last resort: copy caption
     navigator.clipboard?.writeText(caption)
     setCaptionCopied(true)
