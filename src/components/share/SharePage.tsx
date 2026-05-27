@@ -20,13 +20,14 @@ function generateCaption(lang: Language, champion: TeamId | null, finalHome: Tea
   const homeName = homeTeam ? getTeamName(homeTeam, lang) : 'TBD'
   const awayName = awayTeam ? getTeamName(awayTeam, lang) : 'TBD'
 
+  const url = 'worldcup-winner.vercel.app'
   if (lang === 'cn') {
-    return `我预测的世界杯冠军是：${cFlag} ${championName}！决赛对阵：${hFlag} ${homeName} vs ${aFlag} ${awayName}。截图存证，赛后见分晓！🏆 #FIFA世界杯2026`
+    return `我预测的世界杯冠军是：${cFlag} ${championName}！决赛对阵：${hFlag} ${homeName} vs ${aFlag} ${awayName}。截图存证，赛后见分晓！🏆 ${url} #FIFA世界杯2026`
   }
   if (lang === 'es') {
-    return `¡Mi predicción del campeón del Mundial: ${cFlag} ${championName}! Final: ${hFlag} ${homeName} vs ${aFlag} ${awayName}. ¡Guarda esto — ¡veremos quién tiene razón! 🏆 #FIFAWorldCup2026`
+    return `¡Mi predicción del campeón del Mundial: ${cFlag} ${championName}! Final: ${hFlag} ${homeName} vs ${aFlag} ${awayName}. ¡Guarda esto! 🏆 ${url} #FIFAWorldCup2026`
   }
-  return `My World Cup champion prediction: ${cFlag} ${championName}! Final: ${hFlag} ${homeName} vs ${aFlag} ${awayName}. Screenshot this — let's see who's right! 🏆 #FIFAWorldCup2026`
+  return `My World Cup champion prediction: ${cFlag} ${championName}! Final: ${hFlag} ${homeName} vs ${aFlag} ${awayName}. Let's see who's right! 🏆 ${url} #FIFAWorldCup2026`
 }
 
 function compressPhoto(dataUrl: string): Promise<string> {
@@ -149,10 +150,59 @@ export function SharePage({ lang }: Props) {
   async function handleNativeShare() {
     if (!celebrationUrl && !bracketUrl) return
 
+    // Merge celebration (left) + bracket (right) into a single landscape image.
+    // This is required because WeChat Moments only accepts one image at a time.
+    async function buildCombinedImage(): Promise<string | null> {
+      const loadImg = (src: string) => new Promise<HTMLImageElement>((res, rej) => {
+        const img = new Image()
+        img.onload = () => res(img)
+        img.onerror = rej
+        img.crossOrigin = 'anonymous'
+        img.src = src
+      })
+
+      const sources = [celebrationUrl, bracketUrl].filter(Boolean) as string[]
+      if (sources.length === 0) return null
+
+      const imgs = await Promise.all(sources.map(s => loadImg(s)))
+      const H = 600  // target height for both images
+      const FOOTER = 38
+      const GAP = 8
+      const widths = imgs.map(img => Math.round(img.naturalWidth * H / img.naturalHeight))
+      const totalW = widths.reduce((a, b) => a + b, 0) + (imgs.length - 1) * GAP
+
+      const canvas = document.createElement('canvas')
+      canvas.width = totalW
+      canvas.height = H + FOOTER
+      const ctx = canvas.getContext('2d')!
+
+      ctx.fillStyle = '#060b18'
+      ctx.fillRect(0, 0, totalW, canvas.height)
+
+      let x = 0
+      imgs.forEach((img, i) => {
+        ctx.drawImage(img, x, 0, widths[i], H)
+        x += widths[i] + GAP
+      })
+
+      // Footer bar with URL
+      ctx.fillStyle = '#0c1526'
+      ctx.fillRect(0, H, totalW, FOOTER)
+      ctx.fillStyle = '#ffd70050'
+      ctx.fillRect(0, H, totalW, 1)
+      ctx.fillStyle = '#ffd700'
+      ctx.font = 'bold 16px system-ui, -apple-system, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText('worldcup-winner.vercel.app  ·  #FIFAWorldCup2026', totalW / 2, H + FOOTER / 2)
+
+      return canvas.toDataURL('image/jpeg', 0.88)
+    }
+
     async function urlToFile(url: string, filename: string): Promise<File> {
       if (url.startsWith('data:')) {
         const [meta, b64] = url.split(',')
-        const mime = meta.match(/:(.*?);/)?.[1] ?? 'image/png'
+        const mime = meta.match(/:(.*?);/)?.[1] ?? 'image/jpeg'
         const bytes = atob(b64)
         const arr = new Uint8Array(bytes.length)
         for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i)
@@ -163,27 +213,18 @@ export function SharePage({ lang }: Props) {
     }
 
     try {
-      // Build file list: celebration first (hero image), bracket second
-      const files: File[] = []
-      if (celebrationUrl) files.push(await urlToFile(celebrationUrl, 'wc2026-celebration.png'))
-      if (bracketUrl) files.push(await urlToFile(bracketUrl, 'wc2026-bracket.png'))
+      // Build the combined image; fall back to celebration or bracket alone if canvas fails
+      const combined = await buildCombinedImage().catch(() => null)
+      const primaryUrl = combined ?? celebrationUrl ?? bracketUrl!
 
+      const file = await urlToFile(primaryUrl, 'wc2026-predictions.jpg')
       const baseData = { title: 'FIFA World Cup 2026 Prediction', text: caption }
+      const shareData: ShareData = { ...baseData, files: [file] }
 
-      // Try sharing both images together
-      const bothData: ShareData = { ...baseData, files }
-      if (navigator.canShare?.(bothData)) {
-        await navigator.share(bothData)
+      if (navigator.canShare?.(shareData)) {
+        await navigator.share(shareData)
         return
       }
-
-      // Some devices support only 1 file — fall back to celebration image only
-      if (files.length > 0 && navigator.canShare?.({ ...baseData, files: [files[0]] })) {
-        await navigator.share({ ...baseData, files: [files[0]] })
-        return
-      }
-
-      // Text-only fallback
       if (navigator.share) {
         await navigator.share(baseData)
         return
@@ -192,7 +233,6 @@ export function SharePage({ lang }: Props) {
       if ((e as Error).name === 'AbortError') return
     }
 
-    // Last resort: copy caption
     navigator.clipboard?.writeText(caption)
     setCaptionCopied(true)
     setTimeout(() => setCaptionCopied(false), 2000)

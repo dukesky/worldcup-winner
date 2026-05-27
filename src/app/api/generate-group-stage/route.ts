@@ -17,6 +17,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid picks payload' }, { status: 400 })
     }
     const picks = body as BracketPicks
+    // Force English: Inter font has no CJK glyphs, so non-Latin names render as boxes
+    const imagePicks = { ...picks, language: 'en' as const }
 
     const [flagImages, fonts] = await Promise.all([
       fetchFlagImages(Object.keys(TEAMS)),
@@ -24,7 +26,7 @@ export async function POST(req: NextRequest) {
     ])
 
     const svg = await satori(
-      createElement(GroupStageImageTemplate, { picks, flagImages }),
+      createElement(GroupStageImageTemplate, { picks: imagePicks, flagImages }),
       {
         width: 750,
         height: 1050,

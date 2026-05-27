@@ -8,10 +8,10 @@ const WIN_BG = '#152206'
 const LOSE_BG = '#070c18'
 const PATH_BORDER = '#ffd700'
 
-const CARD_H = 53
-const INNER_GAP = 3
-const OUTER_GAP = 12
-const ROW_H = CARD_H / 2  // 26.5
+const CARD_H = 70
+const INNER_GAP = 4
+const OUTER_GAP = 16
+const ROW_H = CARD_H / 2  // 35
 
 function r32Top(pos: number) {
   const pair = Math.floor((pos - 1) / 2)
@@ -65,23 +65,23 @@ function TeamRow({ tid, isWinner, isLoser, score, isBottom, lang, flagImages }: 
       gap: 5,
     }}>
       {flagSrc
-        ? <img src={flagSrc} width={22} height={15} style={{ borderRadius: 2, objectFit: 'cover', flexShrink: 0 }} />
-        : <div style={{ width: 22, height: 15, background: '#1a2847', borderRadius: 2, flexShrink: 0 }} />
+        ? <img src={flagSrc} width={28} height={19} style={{ borderRadius: 2, objectFit: 'cover', flexShrink: 0 }} />
+        : <div style={{ width: 28, height: 19, background: '#1a2847', borderRadius: 2, flexShrink: 0 }} />
       }
-      <div style={{ fontSize: 11, fontWeight: fw, color: textColor, flex: 1, display: 'flex', alignItems: 'center' }}>
+      <div style={{ fontSize: 13, fontWeight: fw, color: textColor, flex: 1, display: 'flex', alignItems: 'center' }}>
         {getName(tid, lang)}
       </div>
       {score !== null && (
         <div style={{
-          fontSize: 11, fontWeight: 700, display: 'flex',
+          fontSize: 14, fontWeight: 700, display: 'flex',
           color: isWinner ? GOLD : '#3a4a6a',
-          minWidth: 14, justifyContent: 'flex-end',
+          minWidth: 18, justifyContent: 'flex-end',
         }}>
           {score}
         </div>
       )}
       {isWinner && (
-        <div style={{ fontSize: 9, color: GOLD, marginLeft: 2, display: 'flex' }}>✓</div>
+        <div style={{ fontSize: 10, color: GOLD, marginLeft: 2, display: 'flex' }}>✓</div>
       )}
     </div>
   )
@@ -134,23 +134,23 @@ function FinalCell({ champion, lang, flagImages }: { champion: TeamId | null; la
     <div style={{
       background: 'linear-gradient(135deg, #1a3a0a 0%, #0f2606 100%)',
       border: `2px solid ${GOLD}`,
-      borderRadius: 10,
-      height: 80,
+      borderRadius: 12,
+      height: 100,
       width: '100%',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 3,
-      boxShadow: `0 0 16px ${GOLD}40`,
+      gap: 5,
+      boxShadow: `0 0 20px ${GOLD}40`,
     }}>
-      <span style={{ color: GOLD, fontSize: 8, fontWeight: 700, letterSpacing: 3, display: 'flex' }}>FINAL</span>
+      <span style={{ color: GOLD, fontSize: 9, fontWeight: 700, letterSpacing: 3, display: 'flex' }}>FINAL</span>
       {flagSrc
-        ? <img src={flagSrc} width={40} height={27} style={{ borderRadius: 3, objectFit: 'cover' }} />
-        : <div style={{ width: 40, height: 27, background: '#1a2847', borderRadius: 3 }} />
+        ? <img src={flagSrc} width={52} height={35} style={{ borderRadius: 4, objectFit: 'cover' }} />
+        : <div style={{ width: 52, height: 35, background: '#1a2847', borderRadius: 4 }} />
       }
-      <span style={{ color: '#ffffff', fontSize: 12, fontWeight: 800, display: 'flex' }}>{name}</span>
-      <span style={{ color: '#4caf50', fontSize: 8, fontWeight: 700, letterSpacing: 2, display: 'flex' }}>CHAMPION</span>
+      <span style={{ color: '#ffffff', fontSize: 14, fontWeight: 800, display: 'flex' }}>{name}</span>
+      <span style={{ color: '#4caf50', fontSize: 9, fontWeight: 700, letterSpacing: 2, display: 'flex' }}>CHAMPION</span>
     </div>
   )
 }
@@ -195,8 +195,8 @@ export function BracketImageTemplate({ picks, flagImages }: Props) {
     return wildcardSelections[matchId] ?? null
   }
 
-  const ColW = { r32: 150, r16: 130, qf: 114, sf: 98, final: 100 }
-  const GAP = 6
+  const ColW = { r32: 200, r16: 174, qf: 152, sf: 130, final: 132 }
+  const GAP = 8
 
   const leftR32 = R32_SLOTS.filter(s => s.side === 'left').sort((a, b) => a.position - b.position)
   const rightR32 = R32_SLOTS.filter(s => s.side === 'right').sort((a, b) => a.position - b.position)
@@ -225,22 +225,22 @@ export function BracketImageTemplate({ picks, flagImages }: Props) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      background: DARK, padding: '12px 14px',
-      borderRadius: 12, fontFamily: 'Inter',
+      background: DARK, padding: '14px 18px',
+      borderRadius: 14, fontFamily: 'Inter',
       width: '100%', height: '100%',
     }}>
       {/* Title */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-        <span style={{ color: GOLD, fontSize: 12, fontWeight: 700, letterSpacing: 4, display: 'flex' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+        <span style={{ color: GOLD, fontSize: 13, fontWeight: 700, letterSpacing: 4, display: 'flex' }}>
           FIFA WORLD CUP 2026 · MY BRACKET
         </span>
       </div>
 
       {/* Round labels row */}
-      <div style={{ display: 'flex', gap: GAP, justifyContent: 'center', marginBottom: 5 }}>
+      <div style={{ display: 'flex', gap: GAP, justifyContent: 'center', marginBottom: 6 }}>
         {colOrder.map((col, i) => (
           <div key={i} style={{ width: col.w, display: 'flex', justifyContent: 'center' }}>
-            <span style={{ color: col.label ? GOLD : 'transparent', fontSize: 9, fontWeight: 700, letterSpacing: 2, display: 'flex' }}>
+            <span style={{ color: col.label ? GOLD : 'transparent', fontSize: 10, fontWeight: 700, letterSpacing: 2, display: 'flex' }}>
               {col.label || '.'}
             </span>
           </div>
@@ -294,7 +294,7 @@ export function BracketImageTemplate({ picks, flagImages }: Props) {
 
         {/* FINAL */}
         <div style={{ position: 'relative', width: ColW.final, height: CONTAINER_H, display: 'flex' }}>
-          <div style={{ position: 'absolute', top: sfTop() - 13, left: 0, right: 0, height: 80, display: 'flex' }}>
+          <div style={{ position: 'absolute', top: sfTop() - 15, left: 0, right: 0, height: 100, display: 'flex' }}>
             <FinalCell champion={champion} lang={lang} flagImages={flagImages} />
           </div>
         </div>
