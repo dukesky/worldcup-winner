@@ -10,10 +10,18 @@ import { fetchFlagImages } from '@/lib/flags'
 import { loadInterFonts, makeSatoriFonts } from '@/lib/image-fonts'
 import { CelebrationImageTemplate } from '@/components/bracket-image/CelebrationImageTemplate'
 
+// Used when no photo is uploaded — pure text-to-image
 const PROMPT_TEMPLATES: Record<Language, (team: string) => string> = {
-  en: (team) => `Cartoon anime-style illustration of a person joyfully celebrating with the ${team} national football team players. World Cup trophy, colorful confetti, packed stadium crowd in background, vibrant celebratory atmosphere. Person is prominently featured alongside the team.`,
-  cn: (team) => `卡通动漫风格插画，一个人与${team}国家足球队球员一起欢庆，背景有世界杯奖杯、彩色纸屑和欢腾的球场观众，欢乐庆典氛围。`,
-  es: (team) => `Ilustración estilo caricatura anime de una persona celebrando con los jugadores del equipo nacional de fútbol de ${team}. Trofeo de la Copa Mundial, confeti colorido, estadio lleno de fanáticos, atmósfera de celebración vibrante.`,
+  en: (team) => `Cartoon anime-style illustration of a fan joyfully celebrating with the ${team} national football team players. World Cup trophy, colorful confetti, packed stadium crowd in background, vibrant celebratory atmosphere.`,
+  cn: (team) => `卡通动漫风格插画，一名球迷与${team}国家足球队球员一起欢庆，背景有世界杯奖杯、彩色纸屑和欢腾的球场观众，欢乐庆典氛围。`,
+  es: (team) => `Ilustración estilo caricatura anime de un fanático celebrando con los jugadores del equipo nacional de fútbol de ${team}. Trofeo de la Copa Mundial, confeti colorido, estadio lleno de fanáticos.`,
+}
+
+// Used when a photo IS uploaded — instructs the model to use the uploaded subject
+const PHOTO_PROMPT_TEMPLATES: Record<Language, (team: string) => string> = {
+  en: (team) => `I'm providing an image. Take the main subject from that image (it could be a person, animal, or character — use exactly what's shown) and create a fun cartoon anime-style illustration of that subject joyfully celebrating alongside ${team} national football team players. World Cup trophy, colorful confetti, packed stadium in background. Keep the subject clearly recognizable and prominently featured.`,
+  cn: (team) => `我提供了一张图片。请将图中的主体（可以是人、动物或角色——请使用图中实际显示的内容）融入一幅卡通动漫风格的插画中，展示该主体与${team}国家足球队球员一起欢庆的场景。背景有世界杯奖杯、彩色纸屑和欢腾的球场。请保持主体清晰可辨并突出展示。`,
+  es: (team) => `Te proporciono una imagen. Toma el sujeto principal de esa imagen (puede ser una persona, animal o personaje — usa exactamente lo que se muestra) y crea una ilustración divertida estilo caricatura anime de ese sujeto celebrando junto a los jugadores del equipo nacional de fútbol de ${team}. Trofeo del Mundial, confeti, estadio lleno. Mantén el sujeto claramente reconocible y destacado.`,
 }
 
 // Supports text→image and photo editing via OpenRouter
@@ -63,7 +71,9 @@ export async function POST(req: NextRequest) {
 
     const lang: Language = (['en', 'cn', 'es'] as Language[]).includes(language) ? language : 'en'
     const teamName = lang === 'cn' ? team.nameZh : lang === 'es' ? team.nameEs : team.name
-    const prompt = PROMPT_TEMPLATES[lang](teamName)
+    const prompt = photo
+      ? PHOTO_PROMPT_TEMPLATES[lang](teamName)
+      : PROMPT_TEMPLATES[lang](teamName)
 
     const apiKey = process.env.OPENROUTER_API_KEY
 
