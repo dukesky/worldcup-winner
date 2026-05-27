@@ -68,20 +68,20 @@ function TeamRow({ tid, isWinner, isLoser, score, isBottom, lang, flagImages }: 
         ? <img src={flagSrc} width={28} height={19} style={{ borderRadius: 2, objectFit: 'cover', flexShrink: 0 }} />
         : <div style={{ width: 28, height: 19, background: '#1a2847', borderRadius: 2, flexShrink: 0 }} />
       }
-      <span style={{ fontSize: 13, fontWeight: fw, color: textColor, flex: 1, overflow: 'hidden' }}>
+      <div style={{ fontSize: 13, fontWeight: fw, color: textColor, flex: 1, display: 'flex', alignItems: 'center' }}>
         {getName(tid, lang)}
-      </span>
+      </div>
       {score !== null && (
-        <span style={{
-          fontSize: 14, fontWeight: 700,
+        <div style={{
+          fontSize: 14, fontWeight: 700, display: 'flex',
           color: isWinner ? GOLD : '#3a4a6a',
-          minWidth: 18, textAlign: 'right' as const,
+          minWidth: 18, justifyContent: 'flex-end',
         }}>
           {score}
-        </span>
+        </div>
       )}
       {isWinner && (
-        <span style={{ fontSize: 10, color: GOLD, marginLeft: 2 }}>✓</span>
+        <div style={{ fontSize: 10, color: GOLD, marginLeft: 2, display: 'flex' }}>✓</div>
       )}
     </div>
   )

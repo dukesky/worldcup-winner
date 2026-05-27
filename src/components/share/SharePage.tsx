@@ -146,6 +146,41 @@ export function SharePage({ lang }: Props) {
     reader.readAsDataURL(file)
   }
 
+  async function handleNativeShare() {
+    const shareImage = celebrationUrl ?? bracketUrl
+    if (!shareImage) return
+    try {
+      let file: File | undefined
+      if (shareImage.startsWith('data:')) {
+        const [meta, b64] = shareImage.split(',')
+        const mime = meta.match(/:(.*?);/)?.[1] ?? 'image/png'
+        const bytes = atob(b64)
+        const arr = new Uint8Array(bytes.length)
+        for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i)
+        file = new File([arr], 'wc2026-celebration.png', { type: mime })
+      } else {
+        const blob = await fetch(shareImage).then(r => r.blob())
+        file = new File([blob], 'wc2026-bracket.png', { type: blob.type })
+      }
+      const shareData: ShareData = { title: 'FIFA World Cup 2026 Prediction', text: caption, files: [file] }
+      if (navigator.canShare?.(shareData)) {
+        await navigator.share(shareData)
+        return
+      }
+      // Fallback: share text + url only (no file)
+      if (navigator.share) {
+        await navigator.share({ title: 'FIFA World Cup 2026 Prediction', text: caption })
+        return
+      }
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return
+    }
+    // Last resort: copy caption
+    navigator.clipboard?.writeText(caption)
+    setCaptionCopied(true)
+    setTimeout(() => setCaptionCopied(false), 2000)
+  }
+
   async function download(url: string, filename: string) {
     try {
       const response = await fetch(url)
@@ -191,10 +226,22 @@ export function SharePage({ lang }: Props) {
     )
   }
 
+  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share
+
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-4xl mx-auto flex flex-col gap-10">
         <h1 className="text-center text-[#ffd700] text-2xl font-black">🏆 Your Predictions</h1>
+
+        {/* One-tap share button */}
+        {canNativeShare && (celebrationUrl || bracketUrl) && (
+          <button
+            onClick={handleNativeShare}
+            className="w-full bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black py-4 rounded-2xl text-lg hover:scale-105 transition-transform shadow-lg"
+          >
+            {lang === 'cn' ? '📤 一键分享 (微信 / iMessage)' : lang === 'es' ? '📤 Compartir (WeChat / iMessage)' : '📤 Share (WeChat / iMessage)'}
+          </button>
+        )}
 
         {/* Bracket image */}
         {bracketUrl && (
@@ -202,7 +249,7 @@ export function SharePage({ lang }: Props) {
             <img src={bracketUrl} alt="Your bracket" className="w-full block rounded-xl" style={{ display: 'block' }} />
             <button
               onClick={() => download(bracketUrl, 'wc2026-bracket.png')}
-              className="bg-gradient-to-r from-[#ffd700] to-[#ff8c00] text-black font-black px-8 py-3 rounded-xl hover:scale-105 transition-transform"
+              className="border border-[#ffd700] text-[#ffd700] font-black px-8 py-3 rounded-xl hover:bg-[#ffd700]/10 transition-colors"
             >
               {t(lang, 'downloadBracket')}
             </button>
