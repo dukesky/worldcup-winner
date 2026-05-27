@@ -150,8 +150,8 @@ export function SharePage({ lang }: Props) {
   async function handleNativeShare() {
     if (!celebrationUrl && !bracketUrl) return
 
-    // Merge celebration (left) + bracket (right) into a single landscape image.
-    // This is required because WeChat Moments only accepts one image at a time.
+    // Bracket on top (full width) + celebration centered below = single portrait image.
+    // Single image required because WeChat Moments rejects multi-image shares.
     async function buildCombinedImage(): Promise<string | null> {
       const loadImg = (src: string) => new Promise<HTMLImageElement>((res, rej) => {
         const img = new Image()
@@ -161,40 +161,54 @@ export function SharePage({ lang }: Props) {
         img.src = src
       })
 
-      const sources = [celebrationUrl, bracketUrl].filter(Boolean) as string[]
-      if (sources.length === 0) return null
+      if (!bracketUrl && !celebrationUrl) return null
 
-      const imgs = await Promise.all(sources.map(s => loadImg(s)))
-      const H = 600  // target height for both images
-      const FOOTER = 38
-      const GAP = 8
-      const widths = imgs.map(img => Math.round(img.naturalWidth * H / img.naturalHeight))
-      const totalW = widths.reduce((a, b) => a + b, 0) + (imgs.length - 1) * GAP
+      const [bracketImg, celebrationImg] = await Promise.all([
+        bracketUrl ? loadImg(bracketUrl) : Promise.resolve(null),
+        celebrationUrl ? loadImg(celebrationUrl) : Promise.resolve(null),
+      ])
+
+      const W = bracketImg ? bracketImg.naturalWidth : 1200
+      const bracketH = bracketImg ? bracketImg.naturalHeight : 0
+      const FOOTER = 80
+
+      // Celebration: scale to fit, centered, max 55% of canvas width
+      const MAX_CELEB_W = Math.round(W * 0.55)
+      let celebW = 0
+      let celebH = 0
+      const CELEB_GAP = bracketImg && celebrationImg ? 40 : 0
+      if (celebrationImg) {
+        celebW = Math.min(MAX_CELEB_W, celebrationImg.naturalWidth)
+        celebH = Math.round(celebW * celebrationImg.naturalHeight / celebrationImg.naturalWidth)
+      }
+
+      const totalH = bracketH + CELEB_GAP + celebH + FOOTER
 
       const canvas = document.createElement('canvas')
-      canvas.width = totalW
-      canvas.height = H + FOOTER
+      canvas.width = W
+      canvas.height = totalH
       const ctx = canvas.getContext('2d')!
 
       ctx.fillStyle = '#060b18'
-      ctx.fillRect(0, 0, totalW, canvas.height)
+      ctx.fillRect(0, 0, W, totalH)
 
-      let x = 0
-      imgs.forEach((img, i) => {
-        ctx.drawImage(img, x, 0, widths[i], H)
-        x += widths[i] + GAP
-      })
+      if (bracketImg) ctx.drawImage(bracketImg, 0, 0, W, bracketH)
 
-      // Footer bar with URL
+      if (celebrationImg && celebW > 0) {
+        const cx = Math.round((W - celebW) / 2)
+        ctx.drawImage(celebrationImg, cx, bracketH + CELEB_GAP, celebW, celebH)
+      }
+
+      const footerY = bracketH + CELEB_GAP + celebH
       ctx.fillStyle = '#0c1526'
-      ctx.fillRect(0, H, totalW, FOOTER)
+      ctx.fillRect(0, footerY, W, FOOTER)
       ctx.fillStyle = '#ffd70050'
-      ctx.fillRect(0, H, totalW, 1)
+      ctx.fillRect(0, footerY, W, 1)
       ctx.fillStyle = '#ffd700'
-      ctx.font = 'bold 16px system-ui, -apple-system, sans-serif'
+      ctx.font = `bold ${Math.round(FOOTER * 0.45)}px system-ui, -apple-system, sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText('worldcup-winner.vercel.app  ·  #FIFAWorldCup2026', totalW / 2, H + FOOTER / 2)
+      ctx.fillText('worldcup-winner.vercel.app  ·  #FIFAWorldCup2026', W / 2, footerY + FOOTER / 2)
 
       return canvas.toDataURL('image/jpeg', 0.88)
     }

@@ -28,13 +28,13 @@ export async function POST(req: NextRequest) {
     const svg = await satori(
       createElement(BracketImageTemplate, { picks: imagePicks, flagImages }),
       {
-        width: 1600,
-        height: 760,
+        width: 3200,
+        height: 1400,
         fonts: makeSatoriFonts(fonts),
       }
     )
 
-    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1600 } })
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 3200 } })
     const rendered = resvg.render()
     const pngBuffer = rendered.asPng()
     const arrayBuffer = pngBuffer.buffer.slice(
