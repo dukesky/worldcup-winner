@@ -1,13 +1,13 @@
 'use client'
 import { useState, useCallback, useMemo } from 'react'
 import type { GroupPick, KnockoutMatchPick, TeamId, GroupId } from '@/lib/picks'
-import { GROUPS, KNOCKOUT_STRUCTURE } from '@/data/wc2026'
+import { GROUPS, KNOCKOUT_STRUCTURE, getGroupFifaRanking } from '@/data/wc2026'
 import { buildR32Matchups } from '@/lib/bracket'
 
 function initialGroups(): GroupPick[] {
   return GROUPS.map(g => ({
     groupId: g.id as GroupId,
-    ranking: ['', '', '', ''] as [TeamId, TeamId, TeamId, TeamId],
+    ranking: getGroupFifaRanking(g.teams) as [TeamId, TeamId, TeamId, TeamId],
     scores: {},
   }))
 }

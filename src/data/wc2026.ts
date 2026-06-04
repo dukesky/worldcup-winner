@@ -221,3 +221,22 @@ export const GROUP_MATCHES: Record<GroupId, GroupMatch[]> = {
     { home: 'PAN', away: 'CRO', date: '2026-06-28', time: '17:00 ET', venue: 'Gillette Stadium, Boston' },
   ],
 }
+
+// Approximate FIFA World Rankings used for auto-seeding groups
+export const FIFA_RANK: Record<string, number> = {
+  ARG: 1,   FRA: 2,   ENG: 3,   BRA: 4,   BEL: 5,
+  POR: 6,   NED: 7,   ESP: 8,   GER: 9,   COL: 11,
+  USA: 14,  MAR: 14,  JPN: 17,  URU: 19,  SUI: 21,
+  KOR: 23,  AUS: 25,  CRO: 26,  SWE: 28,  IRN: 29,
+  TUN: 30,  NOR: 34,  EGY: 35,  AUT: 36,  SCO: 38,
+  SEN: 39,  TUR: 39,  CZE: 41,  ECU: 44,  ALG: 46,
+  CAN: 47,  CIV: 48,  QAT: 55,  SAU: 56,  PAR: 57,
+  BIH: 62,  GHA: 62,  ZAF: 68,  COD: 72,  PAN: 77,
+  UZB: 83,  HAI: 84,  CPV: 90,  CUW: 90,  NZL: 95,
+  JOR: 98,  MEX: 13,
+}
+
+export function getGroupFifaRanking(groupTeams: string[]): [string, string, string, string] {
+  const sorted = [...groupTeams].sort((a, b) => (FIFA_RANK[a] ?? 999) - (FIFA_RANK[b] ?? 999))
+  return sorted as [string, string, string, string]
+}

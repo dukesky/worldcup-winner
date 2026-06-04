@@ -5,12 +5,11 @@ import { usePredictions } from '@/hooks/usePredictions'
 import { useLanguage } from '@/hooks/useLanguage'
 import { GroupStagePicker } from '@/components/group-stage/GroupStagePicker'
 import { ChampionReveal } from '@/components/champion/ChampionReveal'
-import { PhotoCapture } from '@/components/champion/PhotoCapture'
 import { KnockoutOverview } from '@/components/knockout/KnockoutOverview'
 import { QuadrantView } from '@/components/knockout/QuadrantView'
 import { FinalFourView } from '@/components/knockout/FinalFourView'
 
-type Step = 'groups' | 'knockout' | 'final-four' | 'champion' | 'photo'
+type Step = 'groups' | 'knockout' | 'final-four' | 'champion'
 type QuadrantId = 'UL' | 'LL' | 'UR' | 'LR'
 type KnockoutView = 'overview' | QuadrantId
 
@@ -26,7 +25,7 @@ export default function PredictPage() {
   } = usePredictions()
 
   function handlePhotoReady(dataUrl: string | undefined) {
-    sessionStorage.setItem('wc2026_picks', JSON.stringify({
+    localStorage.setItem('wc2026_picks', JSON.stringify({
       groups, knockout, language: lang, photoDataUrl: dataUrl, wildcardSelections,
     }))
     router.push('/share')
@@ -93,11 +92,7 @@ export default function PredictPage() {
   }
 
   if (step === 'champion' && champion) {
-    return <ChampionReveal champion={champion} lang={lang} onContinue={() => setStep('photo')} />
-  }
-
-  if (step === 'photo') {
-    return <PhotoCapture lang={lang} onPhotoReady={handlePhotoReady} />
+    return <ChampionReveal champion={champion} lang={lang} onPhotoReady={handlePhotoReady} />
   }
 
   return null

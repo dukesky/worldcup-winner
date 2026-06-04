@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { GroupCard } from './GroupCard'
-import { GROUPS, TEAMS, GROUP_MATCHES } from '@/data/wc2026'
+import { GROUPS, TEAMS, GROUP_MATCHES, getGroupFifaRanking } from '@/data/wc2026'
 import { t, getTeamName } from '@/lib/i18n'
 import type { GroupPick, TeamId, GroupId, Language, GroupMatch } from '@/lib/picks'
 
@@ -73,6 +73,7 @@ function FixtureCard({ match, teams, lang, highlighted }: {
 
 export function GroupStagePicker({ picks, lang, currentGroupIdx, onGroupIdxChange, onRankingChange, onScoreChange, onComplete, onBack }: Props) {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
+  const [customized, setCustomized] = useState<Set<string>>(new Set())
 
   const currentIdx = currentGroupIdx
   const setCurrentIdx = onGroupIdxChange
@@ -155,13 +156,37 @@ export function GroupStagePicker({ picks, lang, currentGroupIdx, onGroupIdxChang
       <div className="flex flex-col md:flex-row gap-4">
         {/* Group ranking card */}
         <div className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            {!customized.has(group.id) ? (
+              <span className="text-[10px] text-[#4caf50] font-bold tracking-wider flex items-center gap-1">
+                ✦ {lang === 'cn' ? 'FIFA自动排名' : lang === 'es' ? 'Orden FIFA auto' : 'FIFA auto-ranked'}
+              </span>
+            ) : (
+              <span className="text-[10px] text-[#ffd700]/60 tracking-wider">
+                {lang === 'cn' ? '自定义排名' : lang === 'es' ? 'Orden personalizado' : 'Custom ranking'}
+              </span>
+            )}
+            <button
+              onClick={() => {
+                const reset = getGroupFifaRanking(group.teams)
+                onRankingChange(group.id as GroupId, reset as [TeamId, TeamId, TeamId, TeamId])
+                setCustomized(prev => { const s = new Set(prev); s.delete(group.id); return s })
+              }}
+              className="text-[10px] text-[#8a9bc0] hover:text-[#ffd700] transition-colors"
+            >
+              ↺ {lang === 'cn' ? '重置' : lang === 'es' ? 'Restablecer' : 'Reset to FIFA'}
+            </button>
+          </div>
           <GroupCard
             group={group}
             teams={TEAMS}
             pick={pick}
             lang={lang}
             selectedTeamId={selectedTeamId}
-            onRankingChange={r => onRankingChange(group.id as GroupId, r)}
+            onRankingChange={r => {
+              setCustomized(prev => new Set(prev).add(group.id))
+              onRankingChange(group.id as GroupId, r)
+            }}
             onScoreChange={(k, h, a) => onScoreChange(group.id as GroupId, k, h, a)}
             onTeamSelect={handleTeamSelect}
           />

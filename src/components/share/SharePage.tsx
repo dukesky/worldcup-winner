@@ -46,6 +46,20 @@ function compressPhoto(dataUrl: string): Promise<string> {
   })
 }
 
+function encodePicks(picks: BracketPicks): string {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { photoDataUrl: _photo, ...rest } = picks
+  return btoa(encodeURIComponent(JSON.stringify(rest)))
+}
+
+function decodePicks(b64: string): BracketPicks | null {
+  try {
+    return JSON.parse(decodeURIComponent(atob(b64))) as BracketPicks
+  } catch {
+    return null
+  }
+}
+
 export function SharePage({ lang }: Props) {
   const [bracketUrl, setBracketUrl] = useState<string | null>(null)
   const [groupStageUrl, setGroupStageUrl] = useState<string | null>(null)
@@ -56,25 +70,45 @@ export function SharePage({ lang }: Props) {
   const [captionCopied, setCaptionCopied] = useState(false)
   const [regenLoading, setRegenLoading] = useState(false)
   const [champion, setChampion] = useState<TeamId | null>(null)
+  const [loadedPicks, setLoadedPicks] = useState<BracketPicks | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('wc2026_picks')
-    if (!stored) {
-      setError('No picks found — please start from the beginning.')
+    // 1. Check URL for shared bracket
+    const urlParams = new URLSearchParams(window.location.search)
+    const b64Param = urlParams.get('b')
+    let picks: BracketPicks | null = null
+
+    if (b64Param) {
+      picks = decodePicks(b64Param)
+    }
+
+    // 2. Fall back to localStorage
+    if (!picks) {
+      const stored = localStorage.getItem('wc2026_picks')
+      if (!stored) {
+        setError('No picks found — please start from the beginning.')
+        setLoading(false)
+        return
+      }
+      try {
+        picks = JSON.parse(stored)
+      } catch {
+        setError('Could not read your picks — please try again.')
+        setLoading(false)
+        return
+      }
+    }
+
+    if (!picks) {
+      setError('Could not read picks — please try again.')
       setLoading(false)
       return
     }
 
-    let picks: BracketPicks
-    try {
-      picks = JSON.parse(stored)
-    } catch {
-      setError('Could not read your picks — please try again.')
-      setLoading(false)
-      return
-    }
+    setLoadedPicks(picks)
 
     const champion = picks.knockout.find(m => m.matchId === 'FINAL')?.winner ?? null
     const finalHome = picks.knockout.find(m => m.matchId === 'SF_L')?.winner ?? null
@@ -124,12 +158,12 @@ export function SharePage({ lang }: Props) {
       try {
         const raw = e.target?.result as string
         const compressed = await compressPhoto(raw)
-        // Update sessionStorage so the photo persists on next visit
-        const stored = sessionStorage.getItem('wc2026_picks')
+        // Update localStorage so the photo persists on next visit
+        const stored = localStorage.getItem('wc2026_picks')
         if (stored) {
           const picks = JSON.parse(stored)
           picks.photoDataUrl = compressed
-          sessionStorage.setItem('wc2026_picks', JSON.stringify(picks))
+          localStorage.setItem('wc2026_picks', JSON.stringify(picks))
         }
         const res = await fetch('/api/generate-celebration', {
           method: 'POST',
@@ -270,6 +304,16 @@ export function SharePage({ lang }: Props) {
     }
   }
 
+  function handleCopyLink() {
+    if (!loadedPicks) return
+    const encoded = encodePicks(loadedPicks)
+    const url = `${window.location.origin}/share?b=${encoded}`
+    navigator.clipboard?.writeText(url).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2500)
+    })
+  }
+
   async function handleCopyCaption() {
     try {
       await navigator.clipboard.writeText(caption)
@@ -385,6 +429,22 @@ export function SharePage({ lang }: Props) {
               </p>
             )}
           </div>
+        )}
+
+        {/* Copy shareable link button */}
+        {loadedPicks && (
+          <button
+            onClick={handleCopyLink}
+            className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+              linkCopied
+                ? 'bg-green-600 text-white'
+                : 'bg-[#0c1526] border border-[#ffd700]/40 text-[#ffd700] hover:bg-[#ffd700]/10'
+            }`}
+          >
+            {linkCopied
+              ? (lang === 'cn' ? '✓ 链接已复制！' : lang === 'es' ? '✓ ¡Enlace copiado!' : '✓ Link Copied!')
+              : (lang === 'cn' ? '🔗 复制分享链接' : lang === 'es' ? '🔗 Copiar enlace' : '🔗 Copy Shareable Link')}
+          </button>
         )}
 
         {/* Auto-generated share caption */}
