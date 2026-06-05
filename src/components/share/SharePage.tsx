@@ -64,6 +64,7 @@ export function SharePage({ lang }: Props) {
   const [bracketUrl, setBracketUrl] = useState<string | null>(null)
   const [groupStageUrl, setGroupStageUrl] = useState<string | null>(null)
   const [celebrationUrl, setCelebrationUrl] = useState<string | null>(null)
+  const [journeyUrl, setJourneyUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [caption, setCaption] = useState('')
@@ -140,11 +141,17 @@ export function SharePage({ lang }: Props) {
             .then(r => r.ok ? r.json() : null)
             .then(d => d?.imageUrl ?? null)
         : Promise.resolve(null),
+
+      // Journey image
+      postJson('/api/generate-journey')
+        .then(r => r.ok ? r.blob() : null)
+        .then(b => b ? URL.createObjectURL(b) : null),
     ])
-      .then(([bracket, groupStage, celebration]) => {
+      .then(([bracket, groupStage, celebration, journey]) => {
         setBracketUrl(bracket)
         setGroupStageUrl(groupStage)
         setCelebrationUrl(celebration)
+        setJourneyUrl(journey)
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
@@ -184,9 +191,6 @@ export function SharePage({ lang }: Props) {
   async function handleNativeShare() {
     if (!celebrationUrl && !bracketUrl) return
 
-    // Celebration image overlaid INSIDE the bracket, centered below the FINAL cell.
-    // Canvas stays at bracket dimensions — no extra height added.
-    // Single image required because WeChat Moments rejects multi-image shares.
     async function buildCombinedImage(): Promise<string | null> {
       const loadImg = (src: string) => new Promise<HTMLImageElement>((res, rej) => {
         const img = new Image()
@@ -196,58 +200,69 @@ export function SharePage({ lang }: Props) {
         img.src = src
       })
 
-      if (!bracketUrl && !celebrationUrl) return null
+      // Use journey as primary; fall back to bracket if journey failed
+      const primaryUrl = journeyUrl ?? bracketUrl
+      if (!primaryUrl && !celebrationUrl) return null
 
-      const [bracketImg, celebrationImg] = await Promise.all([
-        bracketUrl ? loadImg(bracketUrl) : Promise.resolve(null),
+      const [primaryImg, celebrationImg] = await Promise.all([
+        primaryUrl ? loadImg(primaryUrl) : Promise.resolve(null),
         celebrationUrl ? loadImg(celebrationUrl) : Promise.resolve(null),
       ])
 
-      // No bracket — return celebration alone
-      if (!bracketImg) {
-        if (!celebrationImg) return null
-        const c = document.createElement('canvas')
-        c.width = celebrationImg.naturalWidth
-        c.height = celebrationImg.naturalHeight
-        c.getContext('2d')!.drawImage(celebrationImg, 0, 0)
-        return c.toDataURL('image/jpeg', 0.88)
+      const W = 750
+      const FOOTER_H = 56
+
+      // Primary image (journey or bracket) — scale to W
+      let primaryH = 0
+      if (primaryImg) {
+        primaryH = Math.round(W * primaryImg.naturalHeight / primaryImg.naturalWidth)
       }
 
-      const W = bracketImg.naturalWidth   // 3200
-      const BH = bracketImg.naturalHeight // 1440
+      // Celebration — scale to max W, max 700px tall
+      let celebW = 0
+      let celebH = 0
+      const CELEB_GAP = primaryImg && celebrationImg ? 16 : 0
+      if (celebrationImg) {
+        const maxCelebH = 700
+        const scaleByW = W / celebrationImg.naturalWidth
+        const scaleByH = maxCelebH / celebrationImg.naturalHeight
+        const scale = Math.min(scaleByW, scaleByH, 1)
+        celebW = Math.round(celebrationImg.naturalWidth * scale)
+        celebH = Math.round(celebrationImg.naturalHeight * scale)
+      }
+
+      const totalH = primaryH + CELEB_GAP + celebH + FOOTER_H
 
       const canvas = document.createElement('canvas')
       canvas.width = W
-      canvas.height = BH
+      canvas.height = totalH
       const ctx = canvas.getContext('2d')!
 
-      // Draw bracket as base layer
-      ctx.drawImage(bracketImg, 0, 0, W, BH)
+      ctx.fillStyle = '#060b18'
+      ctx.fillRect(0, 0, W, totalH)
 
-      if (celebrationImg) {
-        // FINAL cell bottom is ~58.3% down the bracket height (calc from template layout)
-        // overhead ≈ 115px, FINAL content-bottom ≈ 724px → canvas y ≈ 839
-        const FINAL_BOTTOM_Y = Math.round(BH * 0.583)  // ~839
-        const celebStartY = FINAL_BOTTOM_Y + 20
-        const availH = BH - celebStartY - 30            // ~531px
-        const maxW = Math.round(W * 0.225)              // ~720px
-        const scale = Math.min(maxW / celebrationImg.naturalWidth, availH / celebrationImg.naturalHeight, 1)
-        const cW = Math.round(celebrationImg.naturalWidth * scale)
-        const cH = Math.round(celebrationImg.naturalHeight * scale)
-        ctx.drawImage(celebrationImg, Math.round((W - cW) / 2), celebStartY, cW, cH)
+      if (primaryImg) {
+        ctx.drawImage(primaryImg, 0, 0, W, primaryH)
       }
 
-      // URL footer overlaid at bottom with semi-transparent light bar
-      const FOOTER_H = 56
-      ctx.fillStyle = 'rgba(244,246,249,0.92)'
-      ctx.fillRect(0, BH - FOOTER_H, W, FOOTER_H)
-      ctx.fillStyle = '#c8960a'
-      ctx.font = `bold ${Math.round(FOOTER_H * 0.43)}px system-ui,-apple-system,sans-serif`
+      if (celebrationImg && celebW > 0) {
+        const cx = Math.round((W - celebW) / 2)
+        ctx.drawImage(celebrationImg, cx, primaryH + CELEB_GAP, celebW, celebH)
+      }
+
+      // Footer
+      const footerY = totalH - FOOTER_H
+      ctx.fillStyle = 'rgba(6,11,24,0.92)'
+      ctx.fillRect(0, footerY, W, FOOTER_H)
+      ctx.fillStyle = '#ffd70040'
+      ctx.fillRect(0, footerY, W, 1)
+      ctx.fillStyle = '#ffd700'
+      ctx.font = `bold ${Math.round(FOOTER_H * 0.40)}px system-ui,-apple-system,sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText('worldcup-winner.vercel.app  ·  #FIFAWorldCup2026', W / 2, BH - FOOTER_H / 2)
+      ctx.fillText('worldcup-winner.vercel.app  ·  #FIFAWorldCup2026', W / 2, footerY + FOOTER_H / 2)
 
-      return canvas.toDataURL('image/jpeg', 0.88)
+      return canvas.toDataURL('image/jpeg', 0.90)
     }
 
     async function urlToFile(url: string, filename: string): Promise<File> {
@@ -361,6 +376,22 @@ export function SharePage({ lang }: Props) {
           </button>
         )}
 
+        {caption && (
+          <button
+            onClick={() => {
+              window.open(
+                `https://x.com/intent/tweet?text=${encodeURIComponent(caption)}`,
+                '_blank',
+                'noopener,noreferrer'
+              )
+            }}
+            className="w-full bg-black border border-[#ffffff20] text-white font-black py-3.5 rounded-2xl text-base hover:bg-[#111] transition-colors flex items-center justify-center gap-2"
+          >
+            <span style={{ fontFamily: 'monospace', fontWeight: 900 }}>𝕏</span>
+            {lang === 'cn' ? '分享到 X' : lang === 'es' ? 'Compartir en X' : 'Share to X'}
+          </button>
+        )}
+
         {/* Bracket image */}
         {bracketUrl && (
           <div className="flex flex-col gap-4 items-center">
@@ -370,6 +401,19 @@ export function SharePage({ lang }: Props) {
               className="border border-[#ffd700] text-[#ffd700] font-black px-8 py-3 rounded-xl hover:bg-[#ffd700]/10 transition-colors"
             >
               {t(lang, 'downloadBracket')}
+            </button>
+          </div>
+        )}
+
+        {/* Journey image */}
+        {journeyUrl && (
+          <div className="flex flex-col gap-4 items-center">
+            <img src={journeyUrl} alt="Champion's road" className="w-full max-w-sm block rounded-xl" />
+            <button
+              onClick={() => download(journeyUrl, 'wc2026-champion-road.png')}
+              className="border border-[#ffd700] text-[#ffd700] font-black px-8 py-3 rounded-xl hover:bg-[#ffd700]/10 transition-colors"
+            >
+              {lang === 'cn' ? '下载夺冠之路' : lang === 'es' ? 'Descargar camino al título' : 'Download Champion\'s Road'}
             </button>
           </div>
         )}
